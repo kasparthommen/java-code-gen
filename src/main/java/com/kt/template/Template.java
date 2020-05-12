@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Template {
     /**
-     * The source directory relative to the project root. Defaults to the standard Maven {@code "src/main/java}.
+     * The source directory relative to the project root. Defaults to Maven's {@code src/main/java}.
      */
     String sourceDir() default "src/main/java";
 
