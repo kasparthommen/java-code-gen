@@ -23,7 +23,7 @@ public @interface Template {
     Class<?>[] types1() default {};
 
     /**
-     * The concrete classes to replace the 2st type argument with.
+     * The concrete classes to replace the 2nd type argument with.
      */
     Class<?>[] types2() default {};
 }
