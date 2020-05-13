@@ -41,7 +41,7 @@ public class Klass<T1 extends Number, T2> {
 }
 ```
 
-The annotation process will then generate four classes, two of which are as follows:
+The annotation processor will now generate four classes, two of which are as follows:
 
 
 ```java
