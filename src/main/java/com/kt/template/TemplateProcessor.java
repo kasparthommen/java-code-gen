@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -35,25 +34,9 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 @SupportedAnnotationTypes("com.kt.template.Template")
-@SupportedSourceVersion(SourceVersion.RELEASE_14)
+@SupportedSourceVersion(SourceVersion.RELEASE_15)
 @AutoService(Processor.class)
 public class TemplateProcessor extends AbstractProcessor {
-    private static final char[] TOKEN_BOUNDARIES = {
-            ' ',
-            '\t',
-            '\n',
-            '(',
-            ')',
-            '[',
-            ']',
-            '{',
-            '}',
-            ',',
-            '<',
-            '>',
-            ',',
-    };
-
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element element : roundEnv.getElementsAnnotatedWith(Template.class)) {
@@ -95,9 +78,12 @@ public class TemplateProcessor extends AbstractProcessor {
             messager.printMessage(NOTE, template.toString());
             List<? extends TypeMirror> types1 = getTypes(template::types1, messager);
             List<? extends TypeMirror> types2 = getTypes(template::types2, messager);
+            List<? extends TypeMirror> types3 = getTypes(template::types3, messager);
 
             // make sure the number of declared type parameters matches the given number of type parameter values
-            int typesCount = (types1.isEmpty() ? 0 : 1) + (types2.isEmpty() ? 0 : 1);
+            int typesCount = (types1.isEmpty() ? 0 : 1)
+                    + (types2.isEmpty() ? 0 : 1)
+                    + (types3.isEmpty() ? 0 : 1);
             List<? extends TypeParameterElement> typeParameters = sourceClass.getTypeParameters();
             if (typeParameters.size() != typesCount) {
                 messager.printMessage(ERROR, "Expected " + typeParameters.size() + " type parameters, got " + typesCount);
@@ -105,21 +91,31 @@ public class TemplateProcessor extends AbstractProcessor {
             }
 
             // generate concrete template instantiation source files
+            types1 = types1.isEmpty() ? List.of(null) : types1;
+            types2 = types2.isEmpty() ? List.of(null) : types2;
+            types3 = types3.isEmpty() ? List.of(null) : types3;
             List<String> typeParameterNames = typeParameters.stream().map(Object::toString).collect(toList());
             Function<String, String> stripPackage = (String s) -> s.substring(s.lastIndexOf('.') + 1);
+            Function<Object, String> toString = (Object o) -> o != null ? o.toString() : null;
             for (TypeMirror type1 : types1) {
                 for (TypeMirror type2 : types2) {
-                    List<String> concreteTypeNames = Stream.of(type1, type2).map(TypeMirror::toString).map(stripPackage).collect(toList());
+                    for (TypeMirror type3 : types3) {
+                        List<String> concreteTypeNames = List.of(
+                                toString.apply(type1),
+                                toString.apply(type2),
+                                toString.apply(type3)
+                        );
 
-                    List<String> concreteSource = generateSource(
-                            packagePlusSourceClassName,
-                            genericSource,
-                            typeParameterNames,
-                            concreteTypeNames
-                    );
+                        List<String> concreteSource = generateSource(
+                                packagePlusSourceClassName,
+                                genericSource,
+                                typeParameterNames,
+                                concreteTypeNames
+                        );
 
-                    String packagePlusConcreteClassName = packagePlusSourceClassName + concreteTypeNames.stream().map(stripPackage).collect(joining(""));
-                    writeFile(concreteSource, packagePlusConcreteClassName, messager);
+                        String packagePlusConcreteClassName = packagePlusSourceClassName + concreteTypeNames.stream().map(stripPackage).collect(joining(""));
+                        writeFile(concreteSource, packagePlusConcreteClassName, messager);
+                    }
                 }
             }
         }
@@ -144,7 +140,7 @@ public class TemplateProcessor extends AbstractProcessor {
             List<String> genericSource,
             List<String> typeParameterNames,
             List<String> concreteTypeNames) {
-        Function<String, String> stripPackage = (String s) -> s.substring(s.lastIndexOf('.') + 1);
+        Function<String, String> stripPackage = (String s) -> s != null ? s.substring(s.lastIndexOf('.') + 1) : "";
 
         String sourceClassName = stripPackage.apply(packagePlusSourceClassName);
         String packagePlusGeneratedClassName = packagePlusSourceClassName + concreteTypeNames.stream().map(stripPackage).collect(joining(""));
@@ -241,12 +237,7 @@ public class TemplateProcessor extends AbstractProcessor {
     }
 
     private static String replaceToken(String s, String from, String to) {
-        for (char before : TOKEN_BOUNDARIES) {
-            for (char after : TOKEN_BOUNDARIES) {
-                s = s.replace(before + from + after, before + to + after);
-            }
-        }
-        return s;
+        return s.replaceAll("\\b" + from + "\\b", to);
     }
 
     private static String toString(Exception ex) {

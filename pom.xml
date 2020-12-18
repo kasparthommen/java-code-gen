@@ -43,7 +43,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <release>14</release>
+                    <release>15</release>
                     <fork>true</fork>   <!-- necessary to make 'enable-preview' below work -->
                     <compilerArgs>
                         <arg>--enable-preview</arg>
@@ -55,7 +55,23 @@
                             <version>${auto-service.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                    <source>15</source>
+                    <target>15</target>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
