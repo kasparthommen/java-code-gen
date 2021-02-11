@@ -1,6 +1,9 @@
 # Java Template
 ### Introduction
-An approach to emulate C++ templates. Works by generating class instantiations with concrete types using a simple annotation. Helps avoiding virtual method calls.
+An approach to emulate C++ templates. Works by generating class instantiations with concrete types using a simple
+annotation. Helps to avoid virtual method calls.
+
+**This is experimental and unfinished code. Please use at your own risk.**
 
 ### Example
 Say you have the following generic class with two type arguments:
