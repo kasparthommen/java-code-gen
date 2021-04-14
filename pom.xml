@@ -43,8 +43,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <source>16</source>
-                    <target>8</target>
+                    <release>15</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>com.google.auto.service</groupId>

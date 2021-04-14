@@ -1,5 +1,6 @@
 package com.kt.template;
 
+
 import com.google.auto.service.AutoService;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -7,8 +8,6 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
-import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -23,19 +22,23 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 @SupportedAnnotationTypes("com.kt.template.Template")
 @AutoService(Processor.class)
 public class TemplateProcessor extends AbstractProcessor {
+    private static final Function<String, String> STRIP_PACKAGE = s -> s.substring(s.lastIndexOf('.') + 1);
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (Element element : roundEnv.getElementsAnnotatedWith(Template.class)) {
@@ -53,8 +56,8 @@ public class TemplateProcessor extends AbstractProcessor {
                         + ". Possibly a mis-specification of the relative source directory (" + template.sourceDir() + ")?");
             }
             messager.printMessage(NOTE, "sourceDir=" + sourceDir);
-            String packagePlusSourceClassName = sourceClass.getQualifiedName().toString();
-            String relativePath = packagePlusSourceClassName.replace(".", File.separator) + ".java";
+            String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
+            String relativePath = fullyQualifiedSourceClassName.replace(".", File.separator) + ".java";
             Path sourceFile = sourceDir.resolve(relativePath);
             if (!Files.exists(sourceFile)) {
                 messager.printMessage(ERROR, "Source file not found: " + sourceFile);
@@ -70,96 +73,126 @@ public class TemplateProcessor extends AbstractProcessor {
                 }
             } catch (IOException ex) {
                 messager.printMessage(ERROR, toString(ex));
-                return false;
+                return true;
             }
 
             // read desired concrete types
             messager.printMessage(NOTE, template.toString());
-            List<? extends TypeMirror> types1 = getTypes(template::types1, messager);
-            List<? extends TypeMirror> types2 = getTypes(template::types2, messager);
-            List<? extends TypeMirror> types3 = getTypes(template::types3, messager);
+            TypeMirror[] types1 = getTypes(template::types1, messager);
+            TypeMirror[] types2 = getTypes(template::types2, messager);
+            TypeMirror[] types3 = getTypes(template::types3, messager);
 
             // make sure the number of declared type parameters matches the given number of type parameter values
-            int typesCount = (types1.isEmpty() ? 0 : 1)
-                    + (types2.isEmpty() ? 0 : 1)
-                    + (types3.isEmpty() ? 0 : 1);
+            int instantiationCount = types1.length;
+            if (instantiationCount == 0) {
+                messager.printMessage(ERROR, "Must provide at least one concrete type in types1");
+                return true;
+            }
+            int typeArrayCount = 1  // from types1
+                    + (types2 != null ? 1 : 0)
+                    + (types3 != null ? 1 : 0);
             List<? extends TypeParameterElement> typeParameters = sourceClass.getTypeParameters();
-            if (typeParameters.size() != typesCount) {
-                messager.printMessage(ERROR, "Expected " + typeParameters.size() + " type parameters, got " + typesCount);
-                return false;
+            if (typeParameters.size() != typeArrayCount) {
+                messager.printMessage(ERROR, "Expected " + typeParameters.size() + " type parameters, got " + typeArrayCount);
+                return true;
+            }
+
+            // make sure all type array have the same length
+            if (types2 != null && types2.length != instantiationCount) {
+                messager.printMessage(ERROR, "Expected " + instantiationCount + " type parameters in types2, got " + types2.length);
+                return true;
+            }
+            if (types3 != null && types3.length != instantiationCount) {
+                messager.printMessage(ERROR, "Expected " + instantiationCount + " type parameters in types3, got " + types3.length);
+                return true;
+            }
+
+            // check optional replacements
+            String[] replacements = template.replacements();
+            if (replacements.length > 0) {
+                if (replacements.length % 3 != 0) {
+                    messager.printMessage(
+                            ERROR,
+                            "Expected replacements array with a series of triplets of the form [className, from, to] but was "
+                                    + Arrays.toString(replacements));
+                    return true;
+                }
             }
 
             // generate concrete template instantiation source files
-            types1 = types1.isEmpty() ? List.of(null) : types1;
-            types2 = types2.isEmpty() ? List.of(null) : types2;
-            types3 = types3.isEmpty() ? List.of(null) : types3;
-            List<String> typeParameterNames = typeParameters.stream().map(Object::toString).collect(toList());
-            Function<String, String> stripPackage = (String s) -> s.substring(s.lastIndexOf('.') + 1);
-            Function<Object, String> toString = (Object o) -> o != null ? o.toString() : null;
-            for (TypeMirror type1 : types1) {
-                for (TypeMirror type2 : types2) {
-                    for (TypeMirror type3 : types3) {
-                        List<String> concreteTypeNames = List.of(
-                                toString.apply(type1),
-                                toString.apply(type2),
-                                toString.apply(type3)
-                        );
+            String[] typeParameterNames = typeParameters.stream().map(Object::toString).toArray(String[]::new);
+            for (int i = 0; i < instantiationCount; i++) {
+                String[] fullyQualifiedConcreteTypeNames = Stream.of(
+                        types1[i].toString(),
+                        types2 != null ? types2[i].toString() : null,
+                        types3 != null ? types3[i].toString() : null
+                ).filter(Objects::nonNull).toArray(String[]::new);
 
-                        List<String> concreteSource = generateSource(
-                                packagePlusSourceClassName,
-                                genericSource,
-                                typeParameterNames,
-                                concreteTypeNames
-                        );
+                messager.printMessage(NOTE, "Instantiating " + sourceClass.getClass() + " for " + Arrays.toString(fullyQualifiedConcreteTypeNames));
+                String fullyQualifiedConcreteClassName = fullyQualifiedSourceClassName
+                        + Arrays.stream(fullyQualifiedConcreteTypeNames)
+                                .map(STRIP_PACKAGE)
+                                .map(s -> s.substring(0, 1).toUpperCase() + s.substring(1))
+                                .collect(joining(""));
+                List<String> concreteSource = generateSource(
+                        fullyQualifiedSourceClassName,
+                        fullyQualifiedConcreteClassName,
+                        genericSource,
+                        typeParameterNames,
+                        fullyQualifiedConcreteTypeNames,
+                        replacements);
 
-                        String packagePlusConcreteClassName = packagePlusSourceClassName + concreteTypeNames.stream().map(stripPackage).collect(joining(""));
-                        writeFile(concreteSource, packagePlusConcreteClassName, messager);
-                    }
-                }
+                writeFile(concreteSource, fullyQualifiedConcreteClassName, messager);
             }
         }
 
         return true;
     }
 
-    private static List<? extends TypeMirror> getTypes(Supplier<Class<?>[]> s, Messager messager) {
+    private static  TypeMirror[] getTypes(Supplier<Class<?>[]> s, Messager messager) {
         // uses this trick:
         // https://stackoverflow.com/questions/7687829/java-6-annotation-processing-getting-a-class-from-an-annotation/52793839#52793839
         try {
             s.get();
         } catch (MirroredTypesException mtex) {
-            return mtex.getTypeMirrors();
+            List<? extends TypeMirror> typeMirrors = mtex.getTypeMirrors();
+            return typeMirrors.isEmpty() ? null : typeMirrors.toArray(TypeMirror[]::new);
         }
         messager.printMessage(ERROR, "Illegal state");
-        return null;
+        throw new IllegalStateException("Cannot get to here");
     }
 
     public static List<String> generateSource(
-            String packagePlusSourceClassName,
+            String fullyQualifiedSourceClassName,
+            String fullyQualifiedConcreteClassName,
             List<String> genericSource,
-            List<String> typeParameterNames,
-            List<String> concreteTypeNames) {
-        Function<String, String> stripPackage = (String s) -> s != null ? s.substring(s.lastIndexOf('.') + 1) : "";
+            String[] typeParameterNames,
+            String[] fullyQualifiedConcreteTypeNames,
+            String[] replacements) {
+        assert typeParameterNames.length == fullyQualifiedConcreteTypeNames.length;
+        assert replacements.length % 3 == 0;
 
-        String sourceClassName = stripPackage.apply(packagePlusSourceClassName);
-        String packagePlusGeneratedClassName = packagePlusSourceClassName + concreteTypeNames.stream().map(stripPackage).collect(joining(""));
+        String sourceClassName = STRIP_PACKAGE.apply(fullyQualifiedSourceClassName);
+        String concreteClassName = STRIP_PACKAGE.apply(fullyQualifiedConcreteClassName);
+        String sourceClassDeclaration = "class " + sourceClassName;
 
         boolean removeTemplateAnnotation = true;
         String templateString = "@Template";
         BracketSkipper templateSkipper = null;
 
         boolean replaceClassDeclaration = true;
-        String oldClassDeclaration = "class " + sourceClassName;
         BracketSkipper typeArgsSkipper = null;
+
+        String tempLine = null;
 
         List<String> concreteSource = new ArrayList<>();
         for (String line : genericSource) {
-            // remote Template import
+            // remove Template import
             if (line.startsWith("import " + Template.class.getName())) {
                 continue;
             }
 
-            // remote @Template(...) annotation
+            // remove @Template(...) annotation
             if (removeTemplateAnnotation) {
                 if (templateSkipper == null) {
                     int templateIndex = line.indexOf(templateString);
@@ -185,13 +218,11 @@ public class TemplateProcessor extends AbstractProcessor {
 
             // replace class declaration
             if (replaceClassDeclaration) {
-                String beforeLine = "";
                 if (typeArgsSkipper == null) {
-                    int classDeclarationIndex = line.indexOf(oldClassDeclaration);
+                    int classDeclarationIndex = line.indexOf(sourceClassDeclaration);
                     if (classDeclarationIndex != -1) {
                         typeArgsSkipper = new BracketSkipper('<', '>');
-                        beforeLine = line.substring(0, classDeclarationIndex);
-                        line = line.substring(classDeclarationIndex + oldClassDeclaration.length());
+                        tempLine = line.substring(0, classDeclarationIndex + sourceClassDeclaration.length());
                     }
                 }
 
@@ -200,19 +231,27 @@ public class TemplateProcessor extends AbstractProcessor {
                     if (processed == null) {
                         continue;
                     } else {
-                        String newClassDeclaration = "class " + stripPackage.apply(packagePlusGeneratedClassName);
-                        line = newClassDeclaration + processed;
+                        line = tempLine + processed;
                         replaceClassDeclaration = false;
                     }
                 }
-
-                line = beforeLine + line;
             }
 
-            // replace generic types by concrete ones
-            for (int i = 0; i < typeParameterNames.size(); i++) {
-                if (line.contains(typeParameterNames.get(i))) {
-                    line = replaceToken(line, typeParameterNames.get(i), concreteTypeNames.get(i));
+            // process custom replacements
+            for (int i = 0; i < replacements.length; i += 3) {
+                String typeName = replacements[i];
+                String from = replacements[i + 1];
+                String to = replacements[i + 2];
+                if (List.of(fullyQualifiedConcreteTypeNames).contains(typeName)) {
+                    line = line.replace(from, to);
+                }
+            }
+
+            // replace generic class by concrete class and generic types by concrete ones
+            line = line.replace(sourceClassName, concreteClassName);
+            for (int i = 0; i < typeParameterNames.length; i++) {
+                if (line.contains(typeParameterNames[i])) {
+                    line = replaceToken(line, typeParameterNames[i], STRIP_PACKAGE.apply(fullyQualifiedConcreteTypeNames[i]));
                 }
             }
 
@@ -222,16 +261,16 @@ public class TemplateProcessor extends AbstractProcessor {
         return concreteSource;
     }
 
-    private void writeFile(List<String> source, String packagePlusConcreteClassName, Messager messager) {
+    private void writeFile(List<String> source, String fullyQualifiedConcreteClassName, Messager messager) {
         try {
-            JavaFileObject targetFile = processingEnv.getFiler().createSourceFile(packagePlusConcreteClassName);
+            JavaFileObject targetFile = processingEnv.getFiler().createSourceFile(fullyQualifiedConcreteClassName);
             try (PrintWriter targetWriter = new PrintWriter(targetFile.openWriter())) {
                 for (String line : source) {
                     targetWriter.println(line);
                 }
             }
         } catch (IOException e) {
-            messager.printMessage(ERROR, "Could not generate file " + packagePlusConcreteClassName);
+            messager.printMessage(ERROR, "Could not generate file " + fullyQualifiedConcreteClassName);
         }
     }
 
@@ -254,7 +293,7 @@ public class TemplateProcessor extends AbstractProcessor {
     private static class BracketSkipper {
         private final char start;
         private final char end;
-        private int bracketCounter = 0;
+        private int bracketCounter;
 
         public BracketSkipper(char start, char end) {
             this.start = start;
