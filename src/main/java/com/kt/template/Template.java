@@ -13,9 +13,16 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Template {
     /**
-     * The source directory relative to the project root. Defaults to Maven's {@code src/main/java}.
+     * If true the type names are being appended to the original class name. If false the type names are
+     * being prepended to the original class name.
      */
-    String sourceDir() default "src/main/java";
+    boolean appendTypeNames() default true;
+    /**
+     * The source directory relative to the classpath where <code>.class</code> files are residing. Defaults
+     * to Maven's <code>../../src/main/java</code>, i.e., up two levels from <code>target/classes/</code>
+     * and then down to <code>src/main/java</code>
+     */
+    String relativeSourceDir() default "../../src/main/java";
 
     /**
      * The concrete classes to replace the 1st type argument with, primitives types allowed.

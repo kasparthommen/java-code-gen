@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,10 +35,13 @@ import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
+
 @SupportedAnnotationTypes("com.kt.template.Template")
 @AutoService(Processor.class)
 public class TemplateProcessor extends AbstractProcessor {
-    private static final Function<String, String> STRIP_PACKAGE = s -> s.substring(s.lastIndexOf('.') + 1);
+    private static final Function<String, String> FQ_TO_CLASS = s -> s.substring(s.lastIndexOf('.') + 1);
+    private static final Function<String, String> FQ_TO_PACKAGE = s -> s.substring(0, s.lastIndexOf('.'));
+    private static final Function<String, String> FIRST_UPPER = s -> s.substring(0, 1).toUpperCase() + s.substring(1);
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -50,10 +54,18 @@ public class TemplateProcessor extends AbstractProcessor {
             Template template = sourceClass.getAnnotation(Template.class);
 
             // find source file
-            Path sourceDir = Path.of("").toAbsolutePath().resolve(template.sourceDir());
+            Path classFileDir;
+            try {
+                classFileDir = Path.of(getClass().getClassLoader().getResource(".").toURI());
+            } catch (URISyntaxException ex) {
+                messager.printMessage(ERROR, ex.getMessage());
+                return true;
+            }
+            Path sourceDir = classFileDir.resolve(template.relativeSourceDir()).normalize();
             if (!Files.exists(sourceDir)) {
                 messager.printMessage(ERROR, "Source path not found: " + sourceDir
-                        + ". Possibly a mis-specification of the relative source directory (" + template.sourceDir() + ")?");
+                        + ". Possibly a mis-specification of the relative source directory (" + template.relativeSourceDir() + ")?");
+                return true;
             }
             messager.printMessage(NOTE, "sourceDir=" + sourceDir);
             String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
@@ -129,11 +141,14 @@ public class TemplateProcessor extends AbstractProcessor {
                 ).filter(Objects::nonNull).toArray(String[]::new);
 
                 messager.printMessage(NOTE, "Instantiating " + sourceClass.getClass() + " for " + Arrays.toString(fullyQualifiedConcreteTypeNames));
-                String fullyQualifiedConcreteClassName = fullyQualifiedSourceClassName
-                        + Arrays.stream(fullyQualifiedConcreteTypeNames)
-                                .map(STRIP_PACKAGE)
-                                .map(s -> s.substring(0, 1).toUpperCase() + s.substring(1))
-                                .collect(joining(""));
+                String typeNames = Arrays.stream(fullyQualifiedConcreteTypeNames)
+                                         .map(FQ_TO_CLASS)
+                                         .map(FIRST_UPPER)
+                                         .collect(joining(""));
+                String fullyQualifiedConcreteClassName = template.appendTypeNames()
+                        ? fullyQualifiedSourceClassName + typeNames
+                        : FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName) + "." + typeNames + FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
+
                 List<String> concreteSource = generateSource(
                         fullyQualifiedSourceClassName,
                         fullyQualifiedConcreteClassName,
@@ -172,8 +187,8 @@ public class TemplateProcessor extends AbstractProcessor {
         assert typeParameterNames.length == fullyQualifiedConcreteTypeNames.length;
         assert replacements.length % 3 == 0;
 
-        String sourceClassName = STRIP_PACKAGE.apply(fullyQualifiedSourceClassName);
-        String concreteClassName = STRIP_PACKAGE.apply(fullyQualifiedConcreteClassName);
+        String sourceClassName = FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
+        String concreteClassName = FQ_TO_CLASS.apply(fullyQualifiedConcreteClassName);
         String sourceClassDeclaration = "class " + sourceClassName;
 
         boolean removeTemplateAnnotation = true;
@@ -251,7 +266,7 @@ public class TemplateProcessor extends AbstractProcessor {
             line = line.replace(sourceClassName, concreteClassName);
             for (int i = 0; i < typeParameterNames.length; i++) {
                 if (line.contains(typeParameterNames[i])) {
-                    line = replaceToken(line, typeParameterNames[i], STRIP_PACKAGE.apply(fullyQualifiedConcreteTypeNames[i]));
+                    line = replaceToken(line, typeParameterNames[i], FQ_TO_CLASS.apply(fullyQualifiedConcreteTypeNames[i]));
                 }
             }
 
