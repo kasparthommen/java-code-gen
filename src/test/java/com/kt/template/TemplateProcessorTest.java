@@ -1,13 +1,14 @@
 package com.kt.template;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static com.kt.template.TemplateProcessor.generateSource;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class TemplateProcessorTest {
     @Test
@@ -36,7 +37,7 @@ public class TemplateProcessorTest {
                 }
                 """;
 
-        assertThat(toString(generateSource("com.kt.Klass", toList(in), List.of("T"), List.of("Foo"))), equalTo(expected));
+        assertEquals(expected, toString(generateSource("com.kt.Klass", toList(in), List.of("T"), List.of("Foo"))));
     }
 
     @Test
@@ -74,7 +75,7 @@ public class TemplateProcessorTest {
                 }
                 """;
 
-        assertThat(toString(generateSource("com.kt.Klass", toList(in), List.of("T1", "T2"), List.of("Double", "Foo"))), equalTo(expected1));
+        assertEquals(expected1, toString(generateSource("com.kt.Klass", toList(in), List.of("T1", "T2"), List.of("Double", "Foo"))));
 
         String expected2 = """
                 package com.kt;
@@ -90,7 +91,7 @@ public class TemplateProcessorTest {
                 }
                 """;
 
-        assertThat(toString(generateSource("com.kt.Klass", toList(in), List.of("T1", "T2"), List.of("String", "Bar"))), equalTo(expected2));
+        assertEquals(expected2, toString(generateSource("com.kt.Klass", toList(in), List.of("T1", "T2"), List.of("String", "Bar"))));
     }
 
     private static List<String> toList(String s) {

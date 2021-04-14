@@ -34,7 +34,6 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 @SupportedAnnotationTypes("com.kt.template.Template")
-@SupportedSourceVersion(SourceVersion.RELEASE_15)
 @AutoService(Processor.class)
 public class TemplateProcessor extends AbstractProcessor {
     @Override
