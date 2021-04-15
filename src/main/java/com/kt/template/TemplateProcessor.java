@@ -8,6 +8,8 @@ import javax.annotation.processing.Messager;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -37,6 +39,7 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 
 @SupportedAnnotationTypes("com.kt.template.Template")
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class)
 public class TemplateProcessor extends AbstractProcessor {
     private static final Function<String, String> FQ_TO_CLASS = s -> s.substring(s.lastIndexOf('.') + 1);
@@ -89,7 +92,6 @@ public class TemplateProcessor extends AbstractProcessor {
             }
 
             // read desired concrete types
-            messager.printMessage(NOTE, template.toString());
             TypeMirror[] types1 = getTypes(template::types1, messager);
             TypeMirror[] types2 = getTypes(template::types2, messager);
             TypeMirror[] types3 = getTypes(template::types3, messager);
@@ -140,7 +142,7 @@ public class TemplateProcessor extends AbstractProcessor {
                         types3 != null ? types3[i].toString() : null
                 ).filter(Objects::nonNull).toArray(String[]::new);
 
-                messager.printMessage(NOTE, "Instantiating " + sourceClass.getClass() + " for " + Arrays.toString(fullyQualifiedConcreteTypeNames));
+                messager.printMessage(NOTE, "Instantiating " + sourceClass.getSimpleName() + " for " + Arrays.toString(fullyQualifiedConcreteTypeNames));
                 String typeNames = Arrays.stream(fullyQualifiedConcreteTypeNames)
                                          .map(FQ_TO_CLASS)
                                          .map(FIRST_UPPER)
@@ -284,8 +286,8 @@ public class TemplateProcessor extends AbstractProcessor {
                     targetWriter.println(line);
                 }
             }
-        } catch (IOException e) {
-            messager.printMessage(ERROR, "Could not generate file " + fullyQualifiedConcreteClassName);
+        } catch (IOException ex) {
+            messager.printMessage(ERROR, "Could not generate file " + fullyQualifiedConcreteClassName + ": " + ex.getMessage());
         }
     }
 
