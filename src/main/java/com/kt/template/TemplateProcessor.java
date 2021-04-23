@@ -150,6 +150,17 @@ public class TemplateProcessor extends AbstractProcessor {
                 String fullyQualifiedConcreteClassName = template.appendTypeNames()
                         ? fullyQualifiedSourceClassName + typeNames
                         : FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName) + "." + typeNames + FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
+                if (template.classNameReplacement().length != 0) {
+                    if (template.classNameReplacement().length != 2) {
+                        messager.printMessage(
+                                ERROR,
+                                "Expected two entries for class name replacement array, but got " + Arrays.toString(template.classNameReplacement()));
+                        return true;
+                    }
+                    String from = template.classNameReplacement()[0];
+                    String to = template.classNameReplacement()[1];
+                    fullyQualifiedConcreteClassName = fullyQualifiedConcreteClassName.replace(from, to);
+                }
 
                 List<String> concreteSource = generateSource(
                         fullyQualifiedSourceClassName,

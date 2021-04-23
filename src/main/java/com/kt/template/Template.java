@@ -17,6 +17,13 @@ public @interface Template {
      * being prepended to the original class name.
      */
     boolean appendTypeNames() default true;
+
+    /**
+     * An optional array of two entries the first one being a string to search in the generated class
+     * name and the secona one its replacement.
+     */
+    String[] classNameReplacement() default {};
+
     /**
      * The source directory relative to the classpath where <code>.class</code> files are residing. Defaults
      * to Maven's <code>../../src/main/java</code>, i.e., up two levels from <code>target/classes/</code>
