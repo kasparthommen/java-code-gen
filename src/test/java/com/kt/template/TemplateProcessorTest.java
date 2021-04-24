@@ -58,6 +58,42 @@ public class TemplateProcessorTest {
     }
 
     @Test
+    public void interfaceOneTypeArg() {
+        String in = """
+                @Template(
+                        types1 = { int.class, long.class }
+                )
+                public interface PrimitiveSequence<T> extends ISequence {
+                    default T get(int index) {
+                        checkIndex(index);
+                        return getUnsafe(index);
+                    }
+                
+                    T get(int index);
+                }
+                """;
+
+        String expected = """
+                public interface PrimitiveSequenceInt extends ISequence {
+                    default int get(int index) {
+                        checkIndex(index);
+                        return getUnsafe(index);
+                    }
+                
+                    int get(int index);
+                }
+                """;
+
+        assertEquals(expected, toString(generateSource(
+                "PrimitiveSequence",
+                "PrimitiveSequenceInt",
+                toList(in),
+                new String[] { "T" },
+                new String[] { "int" },
+                new String[] {})));
+    }
+
+    @Test
     public void twoTypeArgsWithReplacement() {
         String[] replacements = {
                 "double", "(T1[]) new Object", "new  double ",

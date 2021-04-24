@@ -203,6 +203,7 @@ public class TemplateProcessor extends AbstractProcessor {
         String sourceClassName = FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
         String concreteClassName = FQ_TO_CLASS.apply(fullyQualifiedConcreteClassName);
         String sourceClassDeclaration = "class " + sourceClassName;
+        String sourceInterfaceDeclaration = "interface " + sourceClassName;
 
         boolean removeTemplateAnnotation = true;
         String templateString = "@Template";
@@ -248,9 +249,19 @@ public class TemplateProcessor extends AbstractProcessor {
             if (replaceClassDeclaration) {
                 if (typeArgsSkipper == null) {
                     int classDeclarationIndex = line.indexOf(sourceClassDeclaration);
+                    int interfaceDeclarationIndex = line.indexOf(sourceInterfaceDeclaration);
+                    String declaration = null;
+                    int declarationIndex = -1;
                     if (classDeclarationIndex != -1) {
+                        declaration = sourceClassDeclaration;
+                        declarationIndex = classDeclarationIndex;
+                    } else if (interfaceDeclarationIndex != -1) {
+                        declaration = sourceInterfaceDeclaration;
+                        declarationIndex = interfaceDeclarationIndex;
+                    }
+                    if (declarationIndex != -1) {
                         typeArgsSkipper = new BracketSkipper('<', '>');
-                        tempLine = line.substring(0, classDeclarationIndex + sourceClassDeclaration.length());
+                        tempLine = line.substring(0, declarationIndex + declaration.length());
                     }
                 }
 
