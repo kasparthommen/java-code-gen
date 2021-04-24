@@ -48,12 +48,11 @@ public class TemplateProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        Messager messager = processingEnv.getMessager();
+
         for (Element element : roundEnv.getElementsAnnotatedWith(Template.class)) {
             TypeElement sourceClass = (TypeElement) element;
-
-            Messager messager = processingEnv.getMessager();
-            messager.printMessage(NOTE, "Instantiating class templates for " + sourceClass.getClass());
-
+            messager.printMessage(NOTE, "Instantiating class templates for " + sourceClass.getQualifiedName());
             Template template = sourceClass.getAnnotation(Template.class);
 
             // find source file
