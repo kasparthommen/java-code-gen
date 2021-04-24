@@ -27,6 +27,7 @@ public class CodeTransformerProcessorTest {
         String expectedTarget = """
                 package x.y;
                 
+                // generated from x.y.Before
                 public  class After<T, U> {  // Beforex 1Before After
                   int q;
                   
@@ -72,6 +73,7 @@ public class CodeTransformerProcessorTest {
         String expectedTarget = """
                 package x.y;
                 
+                // generated from x.y.Before
                 public  class After<T, U> {
                   long int1;
                   
@@ -103,6 +105,7 @@ public class CodeTransformerProcessorTest {
                 """
                         package x.y;
                         
+                        // generated from x.y.Before
                         public  class After<T, U> {}
                         """,
                 CodeTransformerProcessor.generateTarget(
@@ -127,6 +130,7 @@ public class CodeTransformerProcessorTest {
                         
                         import a.A;
 
+                        // generated from x.y.Before
                         public  class After<T, U> {}
                         """,
                 CodeTransformerProcessor.generateTarget(
@@ -151,6 +155,7 @@ public class CodeTransformerProcessorTest {
                         
                         import b.B;
 
+                        // generated from x.y.Before
                         public  class After<T, U> {}
                         """,
                 CodeTransformerProcessor.generateTarget(
@@ -164,7 +169,7 @@ public class CodeTransformerProcessorTest {
                 
                 import a.A;
                 import com.kt.template.CodeTransformer;
-                import b.B;                
+                import b.B;
 
                 @CodeTransformer(r1 = { "After" })
                 public  class Before<T, U> {}
@@ -177,6 +182,7 @@ public class CodeTransformerProcessorTest {
                         import a.A;
                         import b.B;
                         
+                        // generated from x.y.Before
                         public  class After<T, U> {}
                         """,
                 CodeTransformerProcessor.generateTarget(

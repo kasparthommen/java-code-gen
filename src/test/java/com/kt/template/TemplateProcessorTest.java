@@ -18,7 +18,7 @@ public class TemplateProcessorTest {
                             
                 import com.kt.template.Template;
                 import some.pkg.Foo;
-                            
+                
                 @Template(types1={Foo.class})
                 public class Klass<T
                                      extends
@@ -37,7 +37,8 @@ public class TemplateProcessorTest {
                 package com.kt;
                             
                 import some.pkg.Foo;
-                            
+                
+                // generated from com.kt.Klass
                 public class KlassFoo   {
                     private List<Foo> list;
                     private Test test;
@@ -74,6 +75,7 @@ public class TemplateProcessorTest {
                 """;
 
         String expected = """
+                // generated from PrimitiveSequence
                 public interface PrimitiveSequenceInt extends ISequence {
                     default int get(int index) {
                         checkIndex(index);
@@ -106,7 +108,7 @@ public class TemplateProcessorTest {
                 import com.kt.template.Template;
                 import some.pkg.Foo;
                 import some.pkg.Bar;
-                            
+                
                 @Template(
                         types1 = {Double.class, String.class},
                         types2 = {Foo.class, Bar.class}
@@ -127,7 +129,8 @@ public class TemplateProcessorTest {
                             
                 import some.pkg.Foo;
                 import some.pkg.Bar;
-                            
+                
+                // generated from com.kt.Klass
                 public class KlassDoubleFoo {
                     private double t1;
                     private Foo t2;
@@ -152,7 +155,8 @@ public class TemplateProcessorTest {
                             
                 import some.pkg.Foo;
                 import some.pkg.Bar;
-                            
+                
+                // generated from com.kt.Klass
                 public class KlassStringBar {
                     private String t1;
                     private Bar t2;

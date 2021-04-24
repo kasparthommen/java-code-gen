@@ -153,8 +153,16 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         target = target.replace("\n\nimport " + CodeTransformer.class.getName() + ";\n\n", "\n\n");
         target = target.replace("import " + CodeTransformer.class.getName() + ";\n", "");
 
+        // process custom replacements
+        for (int i = 0; i < froms.length; i++) {
+            target = target.replaceAll(froms[i], tos[i]);
+        }
+
+        // replace class declaration
+        target = target.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
+
         // remove @CodeTransformer(...) annotation
-        String annotation = "\n@" + CodeTransformer.class.getSimpleName();
+        String annotation = "@" + CodeTransformer.class.getSimpleName();
         int idx = target.indexOf(annotation);
         target = target.replace(annotation, "");
         int parenthesisCount = 0;
@@ -166,19 +174,13 @@ public class CodeTransformerProcessor extends AbstractProcessor {
             } else if (c == ')') {
                 parenthesisCount--;
                 if (parenthesisCount == 0) {
-                    target = target.substring(0, idx) + target.substring(idx2 + 1);
+                    target = target.substring(0, idx)
+                            + "// generated from " + fullyQualifiedSourceClassName
+                            + target.substring(idx2 + 1);
                     break;
                 }
             }
             idx2++;
-        }
-
-        // replace class declaration
-        target = target.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
-
-        // process custom replacements
-        for (int i = 0; i < froms.length; i++) {
-            target = target.replaceAll(froms[i], tos[i]);
         }
 
         return target;

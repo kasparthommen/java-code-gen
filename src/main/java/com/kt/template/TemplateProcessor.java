@@ -238,6 +238,7 @@ public class TemplateProcessor extends AbstractProcessor {
                         line = processed;
                         removeTemplateAnnotation = false;
                         if ("".equals(line)) {
+                            concreteSource.add("// generated from " + fullyQualifiedSourceClassName);
                             continue;
                         }
                     }
