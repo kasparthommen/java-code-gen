@@ -74,7 +74,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
             // read source code
             String source;
             try {
-                source = Files.readString(sourceFile);
+                source = Files.readString(sourceFile).replace("\r", "");
             } catch (IOException ex) {
                 messager.printMessage(ERROR, toString(ex));
                 return true;
@@ -150,8 +150,14 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         String target = source;
 
         // remove CodeTransformer import
-        target = target.replace("\n\nimport " + CodeTransformer.class.getName() + ";\n\n", "\n\n");
-        target = target.replace("import " + CodeTransformer.class.getName() + ";\n", "");
+        String importStatement = "\nimport " + CodeTransformer.class.getName() + ";\n";
+        target = target.replace("\n\n" + importStatement + "\n\n", "\n\n\n");
+        target = target.replace("\n\n" + importStatement + "\n", "\n\n\n");
+        target = target.replace("\n" + importStatement + "\n\n", "\n\n\n");
+        target = target.replace("\n" + importStatement + "\n", "\n\n");
+        target = target.replace("\n" + importStatement, "\n\n");
+        target = target.replace(importStatement + "\n", "\n\n");
+        target = target.replace(importStatement, "\n");
 
         // process custom replacements
         for (int i = 0; i < froms.length; i++) {

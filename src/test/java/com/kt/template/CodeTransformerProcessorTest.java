@@ -92,65 +92,118 @@ public class CodeTransformerProcessorTest {
 
     @Test
     public void importRemoval() {
-        String source1 = """
-                package x.y;
-                
-                import com.kt.template.CodeTransformer;
-
-                @CodeTransformer(r1 = { "After" })
-                public  class Before<T, U> {}
-                """;
-
         assertEquals(
                 """
+                package x.y;
+                
+                // generated from x.y.Before
+                public  class After<T, U> {}
+                """,
+                CodeTransformerProcessor.generateTarget(
+                        """
                         package x.y;
                         
-                        // generated from x.y.Before
-                        public  class After<T, U> {}
+                        import com.kt.template.CodeTransformer;
+        
+                        @CodeTransformer(r1 = { "After" })
+                        public  class Before<T, U> {}
                         """,
-                CodeTransformerProcessor.generateTarget(
-                        source1,
                         "x.y.Before", "x.y.After",
                         new String[] {},
                         new String[] {}));
 
-        String source2 = """
+        assertEquals(
+                """
                 package x.y;
 
-                import a.A;
-                import com.kt.template.CodeTransformer;
+                
+                // generated from x.y.Before
+                public  class After<T, U> {}
+                """,
+                CodeTransformerProcessor.generateTarget(
+                        """
+                        package x.y;
 
-                @CodeTransformer(r1 = { "After" })
-                public  class Before<T, U> {}
-                """;
+                        
+                        import com.kt.template.CodeTransformer;
+        
+                        @CodeTransformer(r1 = { "After" })
+                        public  class Before<T, U> {}
+                        """,
+                        "x.y.Before", "x.y.After",
+                        new String[] {},
+                        new String[] {}));
 
         assertEquals(
                 """
+                package x.y;
+
+                
+                // generated from x.y.Before
+                public  class After<T, U> {}
+                """,
+                CodeTransformerProcessor.generateTarget(
+                        """
+                        package x.y;
+
+                        import com.kt.template.CodeTransformer;
+                        
+        
+                        @CodeTransformer(r1 = { "After" })
+                        public  class Before<T, U> {}
+                        """,
+                        "x.y.Before", "x.y.After",
+                        new String[] {},
+                        new String[] {}));
+
+        assertEquals(
+                """
+                package x.y;
+
+                
+                // generated from x.y.Before
+                public  class After<T, U> {}
+                """,
+                CodeTransformerProcessor.generateTarget(
+                        """
+                        package x.y;
+
+
+                        import com.kt.template.CodeTransformer;
+                        
+        
+                        @CodeTransformer(r1 = { "After" })
+                        public  class Before<T, U> {}
+                        """,
+                        "x.y.Before", "x.y.After",
+                        new String[] {},
+                        new String[] {}));
+
+        assertEquals(
+                        """
                         package x.y;
                         
                         import a.A;
-
+                        
                         // generated from x.y.Before
                         public  class After<T, U> {}
                         """,
                 CodeTransformerProcessor.generateTarget(
-                        source2,
+                        """
+                        package x.y;
+                        
+                        import a.A;
+                        import com.kt.template.CodeTransformer;
+        
+                        @CodeTransformer(r1 = { "After" })
+                        public  class Before<T, U> {}
+                        """,
                         "x.y.Before", "x.y.After",
                         new String[] {},
                         new String[] {}));
 
-        String source3 = """
-                package x.y;
-                
-                import com.kt.template.CodeTransformer;
-                import b.B;
-
-                @CodeTransformer(r1 = { "After" })
-                public  class Before<T, U> {}
-                """;
-
         assertEquals(
-                """
+                        """
                         package x.y;
                         
                         import b.B;
@@ -159,24 +212,21 @@ public class CodeTransformerProcessorTest {
                         public  class After<T, U> {}
                         """,
                 CodeTransformerProcessor.generateTarget(
-                        source3,
+                        """
+                        package x.y;
+                        
+                        import com.kt.template.CodeTransformer;
+                        import b.B;
+        
+                        @CodeTransformer(r1 = { "After" })
+                        public  class Before<T, U> {}
+                        """,
                         "x.y.Before", "x.y.After",
                         new String[] {},
                         new String[] {}));
 
-        String source4 = """
-                package x.y;
-                
-                import a.A;
-                import com.kt.template.CodeTransformer;
-                import b.B;
-
-                @CodeTransformer(r1 = { "After" })
-                public  class Before<T, U> {}
-                """;
-
         assertEquals(
-                """
+                        """
                         package x.y;
                         
                         import a.A;
@@ -186,7 +236,16 @@ public class CodeTransformerProcessorTest {
                         public  class After<T, U> {}
                         """,
                 CodeTransformerProcessor.generateTarget(
-                        source4,
+                        """
+                        package x.y;
+                        
+                        import a.A;
+                        import com.kt.template.CodeTransformer;
+                        import b.B;
+        
+                        @CodeTransformer(r1 = { "After" })
+                        public  class Before<T, U> {}
+                        """,
                         "x.y.Before", "x.y.After",
                         new String[] {},
                         new String[] {}));
