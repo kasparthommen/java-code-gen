@@ -151,13 +151,14 @@ public class CodeTransformerProcessor extends AbstractProcessor {
 
         // remove CodeTransformer import
         String importStatement = "\nimport " + CodeTransformer.class.getName() + ";\n";
-        target = target.replace("\n\n" + importStatement + "\n\n", "\n\n\n");
-        target = target.replace("\n\n" + importStatement + "\n", "\n\n\n");
-        target = target.replace("\n" + importStatement + "\n\n", "\n\n\n");
-        target = target.replace("\n" + importStatement + "\n", "\n\n");
-        target = target.replace("\n" + importStatement, "\n\n");
-        target = target.replace(importStatement + "\n", "\n\n");
-        target = target.replace(importStatement, "\n");
+        for (int emptyLinesBefore = 2; emptyLinesBefore >= 0; emptyLinesBefore--) {
+            String before = "\n".repeat(emptyLinesBefore);
+            for (int emptyLinesAfter = 2; emptyLinesAfter >= 0; emptyLinesAfter--) {
+                String after = "\n".repeat(emptyLinesAfter);
+                String emptyLines = "\n".repeat(1 + Math.max(emptyLinesBefore, emptyLinesAfter));
+                target = target.replace(before + importStatement + after, emptyLines);
+            }
+        }
 
         // process custom replacements
         for (int i = 0; i < froms.length; i++) {
