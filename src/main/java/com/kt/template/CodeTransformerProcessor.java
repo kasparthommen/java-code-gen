@@ -82,21 +82,21 @@ public class CodeTransformerProcessor extends AbstractProcessor {
 
             // read replacements
             List<String[]> replacements = new ArrayList<>();
-            Consumer<String[]> toListAdderIfNotEmpty = rep -> {
+            Consumer<String[]> addToListIfNotEmpty = rep -> {
                 if (rep.length > 0) {
                     replacements.add(rep);
                 }
             };
-            toListAdderIfNotEmpty.accept(template.r1());
-            toListAdderIfNotEmpty.accept(template.r2());
-            toListAdderIfNotEmpty.accept(template.r3());
-            toListAdderIfNotEmpty.accept(template.r4());
-            toListAdderIfNotEmpty.accept(template.r5());
-            toListAdderIfNotEmpty.accept(template.r6());
-            toListAdderIfNotEmpty.accept(template.r7());
-            toListAdderIfNotEmpty.accept(template.r8());
-            toListAdderIfNotEmpty.accept(template.r9());
-            toListAdderIfNotEmpty.accept(template.r10());
+            addToListIfNotEmpty.accept(template.t1());
+            addToListIfNotEmpty.accept(template.t2());
+            addToListIfNotEmpty.accept(template.t3());
+            addToListIfNotEmpty.accept(template.t4());
+            addToListIfNotEmpty.accept(template.t5());
+            addToListIfNotEmpty.accept(template.t6());
+            addToListIfNotEmpty.accept(template.t7());
+            addToListIfNotEmpty.accept(template.t8());
+            addToListIfNotEmpty.accept(template.t9());
+            addToListIfNotEmpty.accept(template.t10());
 
             // make sure that replacement arrays are consistent
             if (replacements.size() == 0) {
