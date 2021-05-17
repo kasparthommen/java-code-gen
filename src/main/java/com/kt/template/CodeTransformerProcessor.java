@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -160,14 +162,6 @@ public class CodeTransformerProcessor extends AbstractProcessor {
             }
         }
 
-        // process custom replacements
-        for (int i = 0; i < froms.length; i++) {
-            target = target.replaceAll(froms[i], tos[i]);
-        }
-
-        // replace class declaration
-        target = target.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
-
         // remove @CodeTransformer(...) annotation
         String annotation = "@" + CodeTransformer.class.getSimpleName();
         int idx = target.indexOf(annotation);
@@ -175,6 +169,9 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         int parenthesisCount = 0;
         int idx2 = idx;
         while (true) {
+            if (idx2 >= target.length()) {
+                throw new IllegalStateException(target);
+            }
             char c = target.charAt(idx2);
             if (c == '(') {
                 parenthesisCount++;
@@ -182,13 +179,28 @@ public class CodeTransformerProcessor extends AbstractProcessor {
                 parenthesisCount--;
                 if (parenthesisCount == 0) {
                     target = target.substring(0, idx)
-                            + "// generated from " + fullyQualifiedSourceClassName
+                            + "// generated from $$$$"
                             + target.substring(idx2 + 1);
                     break;
                 }
             }
             idx2++;
         }
+
+        // process custom replacements
+        for (int i = 0; i < froms.length; i++) {
+            Pattern pattern = Pattern.compile(froms[i], Pattern.MULTILINE | Pattern.DOTALL);
+            Matcher matcher = pattern.matcher(target);
+            if (matcher.find()) {
+                target = matcher.replaceAll(tos[i]);
+            }
+        }
+
+        // replace class declaration
+        target = target.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
+
+        // complete replacement comment
+        target = target.replace("$$$$", fullyQualifiedSourceClassName);
 
         return target;
     }
