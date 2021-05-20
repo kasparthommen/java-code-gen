@@ -39,7 +39,7 @@ public class TemplateProcessorTest {
                 import java.util.List;
                 
                 // generated from x.y.Klass
-                public class KlassDate {
+                public class KlassDate   {
                     private List<Date> list;
                     
                     public KlassDate(Date arg) {

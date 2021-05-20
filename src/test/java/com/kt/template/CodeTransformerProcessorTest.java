@@ -138,6 +138,7 @@ public class CodeTransformerProcessorTest {
 
                 
                 // generated from x.y.Before
+                
                 public  class After<T, U> {}
                 """);
 
@@ -164,6 +165,7 @@ public class CodeTransformerProcessorTest {
 
                 
                 // generated from x.y.Before
+                
                 public  class After<T, U> {}
                 """);
 
@@ -180,7 +182,6 @@ public class CodeTransformerProcessorTest {
                 
 
                 @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
-
                 public  class Before<T, U> {}
                 """,
 
@@ -206,7 +207,6 @@ public class CodeTransformerProcessorTest {
                 import com.kt.template.Transform;
 
                 @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
-
                 public  class Before<T, U> {}
                 """,
 
@@ -233,7 +233,6 @@ public class CodeTransformerProcessorTest {
                 import java.util.Date;
 
                 @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
-
                 public  class Before<T, U> {}
                 """,
 
@@ -261,7 +260,6 @@ public class CodeTransformerProcessorTest {
                 import java.util.Date;
 
                 @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
-
                 public  class Before<T, U> {}
                 """,
 
