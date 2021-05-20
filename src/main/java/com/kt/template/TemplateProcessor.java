@@ -137,16 +137,16 @@ public class TemplateProcessor extends AbstractProcessor {
         targetCode = removeImport(targetCode, Replace.class.getName());
         targetCode = removeImport(targetCode, TypeNamePosition.class.getName());
 
-        targetCode = removeAnnotationAndAddSourceFileComment(targetCode, Template.class);
+        targetCode = removeAnnotationAndAddSourceFileComment(targetCode, Template.class, fullyQualifiedSourceClassName);
 
-        targetCode = replaceGenericWithConcreteClassDeclaration(targetCode, sourceClassName, targetClassName);
+        targetCode = replaceGenericWithConcreteClassDeclaration(targetCode, sourceClassName, targetClassName, fullyQualifiedSourceClassName);
         for (int i = 0; i < typeParameterNames.length; i++) {
             String typeParam = typeParameterNames[i];
             String concreteType = concreteTypes[i];
             targetCode = targetCode.replaceAll("\\b" + FQ_TO_CLASS.apply(typeParam) + "\\b", concreteType);
         }
 
-        targetCode = replace(replacements, targetCode);
+        targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
         targetCode = targetCode.replace(SOURCE_CLASS_NAME_PLACEHOLDER, fullyQualifiedSourceClassName);
@@ -157,7 +157,8 @@ public class TemplateProcessor extends AbstractProcessor {
     private static String replaceGenericWithConcreteClassDeclaration(
             String code,
             String sourceClassName,
-            String targetClassName) throws CodeGenerationException {
+            String targetClassName,
+            String fullyQualifiedSourceClassName) throws CodeGenerationException {
         String classDeclarationStartRegex = sourceClassName + "\\s*<";
         int annotationStartIndex = indexOfRegex(code, classDeclarationStartRegex);
         if (annotationStartIndex == -1) {
@@ -165,7 +166,7 @@ public class TemplateProcessor extends AbstractProcessor {
         }
 
         String targetClassDeclaration = targetClassName + "<";
-        code = replaceRegex(code, classDeclarationStartRegex, targetClassDeclaration);
+        code = replaceRegex(code, classDeclarationStartRegex, targetClassDeclaration, fullyQualifiedSourceClassName);
         int startIndex = code.indexOf(targetClassDeclaration);
         code = skipBrackets('<', '>', code, startIndex + targetClassDeclaration.length() - 1);
         return code;

@@ -51,7 +51,7 @@ class CodeGenerationHelper {
 
         String source;
         try {
-            source = Files.readString(sourceFile);
+            source = Files.readString(sourceFile).replace("\r", "");
             return source;
         } catch (IOException ex) {
             throw new CodeGenerationException(toString(ex));
@@ -71,14 +71,17 @@ class CodeGenerationHelper {
         return code;
     }
 
-    static String removeAnnotationAndAddSourceFileComment(String code, Class<?> annotationType) throws CodeGenerationException {
+    static String removeAnnotationAndAddSourceFileComment(
+            String code,
+            Class<?> annotationType,
+            String fullyQualifiedSourceClassName) throws CodeGenerationException {
         String annotationStartRegex = "@\\s*" + annotationType.getSimpleName() + "\\s*\\(";
         int annotationStartIndex = indexOfRegex(code, annotationStartRegex);
         if (annotationStartIndex == -1) {
             throw new CodeGenerationException("Annotation not found: " + annotationType);
         }
 
-        code = replaceRegex(code, annotationStartRegex, "(");
+        code = replaceRegex(code, annotationStartRegex, "(", fullyQualifiedSourceClassName);
         code = skipBrackets('(', ')', code, annotationStartIndex);
         code = code.substring(0, annotationStartIndex)
                 + "// generated from " + SOURCE_CLASS_NAME_PLACEHOLDER
@@ -127,22 +130,22 @@ class CodeGenerationHelper {
         }
     }
 
-    static String replace(Replace[] replacements, String code) throws CodeGenerationException {
+    static String replace(Replace[] replacements, String code, String fullyQualifiedSourceClassName) throws CodeGenerationException {
         for (Replace replacement : replacements) {
             String regexFrom = replacement.from();
             String to = replacement.to();
-            code = replaceRegex(code, regexFrom, to);
+            code = replaceRegex(code, regexFrom, to, fullyQualifiedSourceClassName);
         }
         return code;
     }
 
-    static String replaceRegex(String code, String regexFrom, String to) throws CodeGenerationException {
+    static String replaceRegex(String code, String regexFrom, String to, String fullyQualifiedSourceClassName) throws CodeGenerationException {
         Pattern pattern = Pattern.compile(regexFrom, Pattern.MULTILINE | Pattern.DOTALL);
         Matcher matcher = pattern.matcher(code);
         if (matcher.find()) {
             code = matcher.replaceAll(to);
         } else {
-            throw new CodeGenerationException("Regex search term not found: " + regexFrom);
+            throw new CodeGenerationException("Regex search term not found in " + fullyQualifiedSourceClassName + ": " + regexFrom);
         }
         return code;
     }

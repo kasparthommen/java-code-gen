@@ -1,9 +1,17 @@
 package com.kt.template;
 
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+
 /**
  * Specifies a concrete type-specific instantiation of the generic class,
  */
+@Target(ElementType.ANNOTATION_TYPE)
+@Retention(RetentionPolicy.SOURCE)
 public @interface Instantiation {
     /**
      * The concrete types to replace the type parameters with. The number of concrete types must match

@@ -88,7 +88,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
                 throw new CodeGenerationException(
                         "Target class name must be different from source class name, but was " + fullyQualifiedTargetClassName);
             }
-            messager.printMessage(NOTE, "Creating " + fullyQualifiedTargetClassName + " from " + sourceClassName);
+            messager.printMessage(NOTE, "Creating " + fullyQualifiedTargetClassName + " from " + fullyQualifiedSourceClassName);
             String targetCode = generateTarget(
                     fullyQualifiedSourceClassName,
                     fullyQualifiedTargetClassName,
@@ -114,9 +114,9 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         targetCode = removeImport(targetCode, Transform.class.getName());
         targetCode = removeImport(targetCode, Replace.class.getName());
 
-        targetCode = removeAnnotationAndAddSourceFileComment(targetCode, CodeTransformer.class);
+        targetCode = removeAnnotationAndAddSourceFileComment(targetCode, CodeTransformer.class, fullyQualifiedSourceClassName);
 
-        targetCode = replace(replacements, targetCode);
+        targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
         targetCode = targetCode.replace(SOURCE_CLASS_NAME_PLACEHOLDER, fullyQualifiedSourceClassName);
