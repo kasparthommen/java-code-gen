@@ -20,38 +20,12 @@ public @interface Template {
     String relativeSourceDir() default "../../src/main/java";
 
     /**
-     * If true the type names are being appended to the original class name. If false the type names are
-     * being prepended to the original class name.
+     * Specifies if the concrete type names should be appended ore prepended to the source class name.
      */
-    boolean appendTypeNames() default true;
+    TypeNamePosition typeNamePosition() default TypeNamePosition.APPEND;
 
     /**
-     * An optional array of two entries with the first one being a string to search in the generated class
-     * name and the second one being its replacement.
+     * The list of desired concrete class instantiations.
      */
-    String[] classNameReplacement() default {};
-
-    /**
-     * The concrete classes to replace the 1st type argument with, primitives types allowed.
-     */
-    Class<?>[] types1();
-
-    /**
-     * The concrete classes to replace the 2nd type argument (if present) with, primitives types allowed.
-     */
-    Class<?>[] types2() default {};
-
-    /**
-     * The concrete classes to replace the 3rd type argument (if present) with, primitives types allowed.
-     */
-    Class<?>[] types3() default {};
-
-    /**
-     * An optional array composed of concatenated triplets of the form
-     * {@code [fullyQualifiedTypeName, from, to]} that represents custom string replacements that go beyond
-     * simple type replacements. For example, the replacement triplet
-     * <code>{ "double", "(T1[]) new Object[", "new double[" }</code> would be useful to convert generic
-     * type array construction to double array construction.
-     */
-    String[] replacements() default {};
+    Instantiation[] instantiations();
 }

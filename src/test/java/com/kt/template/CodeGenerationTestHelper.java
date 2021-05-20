@@ -5,6 +5,7 @@ import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 
 import javax.annotation.processing.AbstractProcessor;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,7 +45,7 @@ class CodeGenerationTestHelper {
         // be working, so we do recursive cleanup manually in a shutdown hook.
         Path classFileDir = Path.of(CodeGenerationTestHelper.class.getClassLoader().getResource(".").toURI());
         Path javaRoot = classFileDir.resolve("../../src/main/java/").normalize();
-        Path sourceFile = javaRoot.resolve(fullyQualifiedClassName.replace(".", "/") + ".java");
+        Path sourceFile = javaRoot.resolve(fullyQualifiedClassName.replace(".", File.separator) + ".java");
         final Path rootToDeleteOnExit = javaRoot.resolve(fullyQualifiedClassName.split("\\.")[0]);
         rootToDeleteOnExit.toFile().deleteOnExit();
         Runtime.getRuntime().addShutdownHook(new Thread() {

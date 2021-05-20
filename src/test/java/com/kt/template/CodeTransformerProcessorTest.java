@@ -57,7 +57,7 @@ public class CodeTransformerProcessorTest {
                     @CodeTransformer
                     
                       ( t1
-                         =@Transform(targetName    ="After"
+                         =@ Transform ( targetName    ="After"
                          , replacements=     {
                         @Replace(from="q", to="p"),
                         @Replace(from = "int",

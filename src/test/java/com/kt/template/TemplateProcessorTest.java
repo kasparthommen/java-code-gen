@@ -6,175 +6,163 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.kt.template.TemplateProcessor.generateSource;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.kt.template.CodeGenerationTestHelper.checkTransform;
 
 
 public class TemplateProcessorTest {
     @Test
-    public void oneTypeArg() {
-        String in = """
-                package com.kt;
+    public void oneTypeArg() throws Exception {
+        String source = """
+                package x.y;
                             
                 import com.kt.template.Template;
-                import some.pkg.Foo;
+                import com.kt.template.Instantiation;
+                import java.util.Date;
+                import java.util.List;
                 
-                @Template(types1={Foo.class})
+                @
+                 Template  ( instantiations = @Instantiation({Date.class}))
                 public class Klass<T
                                      extends
-                                      Thing<U<V<W>
-                                      > >>   {
+                                      Number>   {
                     private List<T> list;
-                    private Test test;
                     
-                    public Klass(int arg) {
-                        this.arg = arg;
+                    public Klass(T arg) {
                     }
                 }
                 """;
 
-        String expected = """
-                package com.kt;
+        String expectedTarget = """
+                package x.y;
                             
-                import some.pkg.Foo;
+                import java.util.Date;
+                import java.util.List;
                 
-                // generated from com.kt.Klass
-                public class KlassFoo   {
-                    private List<Foo> list;
-                    private Test test;
+                // generated from x.y.Klass
+                public class KlassDate {
+                    private List<Date> list;
                     
-                    public KlassFoo(int arg) {
-                        this.arg = arg;
+                    public KlassDate(Date arg) {
                     }
                 }
                 """;
 
-        assertEquals(expected, toString(generateSource(
-                "com.kt.Klass",
-                "com.kt.KlassFoo",
-                toList(in),
-                new String[] { "T" },
-                new String[] { "some.pkg.Foo" },
-                new String[] {})));
+        checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.KlassDate", expectedTarget);
     }
 
     @Test
-    public void interfaceOneTypeArg() {
-        String in = """
-                @Template(
-                        types1 = { int.class, long.class }
-                )
-                public interface PrimitiveSequence<T> extends ISequence {
+    public void interfaceOneTypeArg() throws Exception {
+        String source = """
+                package x.y;
+                import com.kt.template.Template;
+                import com.kt.template.Instantiation;
+                
+                @Template(instantiations = {
+                        @Instantiation({ int.class })
+                })
+                public interface PrimitiveSequence<T> {
                     default T get(int index) {
-                        checkIndex(index);
-                        return getUnsafe(index);
+                        return getImpl(index);
                     }
                 
-                    T get(int index);
+                    T getImpl(int index);
                 }
                 """;
 
-        String expected = """
-                // generated from PrimitiveSequence
-                public interface PrimitiveSequenceInt extends ISequence {
+        String expectedTarget = """
+                package x.y;
+
+                // generated from x.y.PrimitiveSequence
+                public interface PrimitiveSequenceInt {
                     default int get(int index) {
-                        checkIndex(index);
-                        return getUnsafe(index);
+                        return getImpl(index);
                     }
                 
-                    int get(int index);
+                    int getImpl(int index);
                 }
                 """;
 
-        assertEquals(expected, toString(generateSource(
-                "PrimitiveSequence",
-                "PrimitiveSequenceInt",
-                toList(in),
-                new String[] { "T" },
-                new String[] { "int" },
-                new String[] {})));
+        checkTransform(new TemplateProcessor(), "x.y.PrimitiveSequence", source, "x.y.PrimitiveSequenceInt", expectedTarget);
     }
 
     @Test
-    public void twoTypeArgsWithReplacement() {
+    public void twoTypeArgsWithReplacement() throws Exception {
         String[] replacements = {
                 "double", "(T1[]) new Object", "new  double ",
                 "some.pkg.Bar", "new T2()", "Bar.create()",
         };
 
-        String in = """
-                package com.kt;
+        String source = """
+                package x.y;
                             
                 import com.kt.template.Template;
-                import some.pkg.Foo;
-                import some.pkg.Bar;
+                import com.kt.template.Instantiation;
+                import com.kt.template.Replace;
+                import java.util.Date;
                 
-                @Template(
-                        types1 = {Double.class, String.class},
-                        types2 = {Foo.class, Bar.class}
-                )
-                public class Klass<T1 extends Whatever, T2> {
+                @Template(instantiations = {
+                    @Instantiation(
+                        value = { double.class, Date.class },
+                        replacements = {
+                            @Replace(from = "\\\\(double\\\\[\\\\]\\\\) new Object", to = "new  double "),
+                            @Replace(from = "= null", to = "= new Date(0)")
+                    }),
+                    @Instantiation(
+                        value = { String.class, Float.class },
+                        replacements = {
+                            @Replace(from = "\\\\(String\\\\[\\\\]\\\\) new Object", to = "new String"),
+                            @Replace(from = "= null", to = "= Float.NaN")
+                        }
+                    )
+                })
+                public class Klass<T1 extends Number, T2> {
                     private T1 t1;
                     private T2 t2;
                             
                     void x() {
                         T1[] array = (T1[]) new Object[42];
-                        T2 t = new T2();
+                        T2 t = null;
                     }
                 }
                 """;
 
-        String expected1 = """
-                package com.kt;
+        String expectedTarget1 = """
+                package x.y;
                             
-                import some.pkg.Foo;
-                import some.pkg.Bar;
+                import java.util.Date;
                 
-                // generated from com.kt.Klass
-                public class KlassDoubleFoo {
+                // generated from x.y.Klass
+                public class KlassDoubleDate {
                     private double t1;
-                    private Foo t2;
+                    private Date t2;
                     
                     void x() {
                         double[] array = new  double [42];
-                        Foo t = new Foo();
+                        Date t = new Date(0);
                     }
                 }
                 """;
 
-        assertEquals(expected1, toString(generateSource(
-                "com.kt.Klass",
-                "com.kt.KlassDoubleFoo",
-                toList(in),
-                new String[] { "T1", "T2" },
-                new String[] { "double", "some.pkg.Foo" },
-                replacements)));
+        checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.KlassDoubleDate", expectedTarget1);
 
-        String expected2 = """
-                package com.kt;
+        String expectedTarget2 = """
+                package x.y;
                             
-                import some.pkg.Foo;
-                import some.pkg.Bar;
+                import java.util.Date;
                 
-                // generated from com.kt.Klass
-                public class KlassStringBar {
+                // generated from x.y.Klass
+                public class KlassStringFloat {
                     private String t1;
-                    private Bar t2;
+                    private Float t2;
                     
                     void x() {
-                        String[] array = (String[]) new Object[42];
-                        Bar t = Bar.create();
+                        String[] array = new String[42];
+                        Float t = Float.NaN;
                     }
                 }
                 """;
 
-        assertEquals(expected2, toString(generateSource(
-                "com.kt.Klass",
-                "com.kt.KlassStringBar",
-                toList(in),
-                new String[] { "T1", "T2" },
-                new String[] { "java.lang.String", "some.pkg.Bar" },
-                replacements)));
+        checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.KlassStringFloat", expectedTarget2);
     }
 
     private static List<String> toList(String s) {
