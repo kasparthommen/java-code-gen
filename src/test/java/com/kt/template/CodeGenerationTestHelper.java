@@ -7,6 +7,7 @@ import com.google.testing.compile.JavaFileObjects;
 import javax.annotation.processing.AbstractProcessor;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -35,7 +36,7 @@ class CodeGenerationTestHelper {
         // to unnamed module @0x7823a2f9
         assertThat(compilation)
                 .generatedSourceFile(expectedTargetClassName)
-                .hasSourceEquivalentTo(JavaFileObjects.forSourceString(expectedTargetClassName, expectedTarget));
+                .contentsAsString(StandardCharsets.UTF_8).isEqualTo(expectedTarget);
     }
 
     private static void saveSourceFileAndScheduleCleanup(String fullyQualifiedClassName, String source) throws Exception {

@@ -21,7 +21,7 @@ public class TemplateProcessorTest {
                 import java.util.List;
                 
                 @
-                 Template  ( instantiations = @Instantiation({Date.class}))
+                 Template  ( instantiations = @Instantiation(types = {Date.class}))
                 public class Klass<T
                                      extends
                                       Number>   {
@@ -58,7 +58,7 @@ public class TemplateProcessorTest {
                 import com.kt.template.Instantiation;
                 
                 @Template(instantiations = {
-                        @Instantiation({ int.class })
+                        @Instantiation(types = { int.class })
                 })
                 public interface PrimitiveSequence<T> {
                     default T get(int index) {
@@ -98,23 +98,27 @@ public class TemplateProcessorTest {
                 import com.kt.template.Template;
                 import com.kt.template.Instantiation;
                 import com.kt.template.Replace;
+                import com.kt.template.TypeNamePosition;
                 import java.util.Date;
                 
-                @Template(instantiations = {
-                    @Instantiation(
-                        value = { double.class, Date.class },
-                        replacements = {
-                            @Replace(from = "\\\\(double\\\\[\\\\]\\\\) new Object", to = "new  double "),
-                            @Replace(from = "= null", to = "= new Date(0)")
-                    }),
-                    @Instantiation(
-                        value = { String.class, Float.class },
-                        replacements = {
-                            @Replace(from = "\\\\(String\\\\[\\\\]\\\\) new Object", to = "new String"),
-                            @Replace(from = "= null", to = "= Float.NaN")
-                        }
-                    )
-                })
+                @Template(
+                    typeNamePosition = TypeNamePosition.PREPEND,
+                    instantiations = {
+                        @Instantiation(
+                            types = { double.class, Date.class },
+                            replacements = {
+                                @Replace(from = "\\\\(double\\\\[\\\\]\\\\) new Object", to = "new  double "),
+                                @Replace(from = "= null", to = "= new Date(0)")
+                        }),
+                        @Instantiation(
+                            types = { String.class, Float.class },
+                            replacements = {
+                                @Replace(from = "\\\\(String\\\\[\\\\]\\\\) new Object", to = "new String"),
+                                @Replace(from = "= null", to = "= Float.NaN")
+                            }
+                        )
+                    }
+                )
                 public class Klass<T1 extends Number, T2> {
                     private T1 t1;
                     private T2 t2;
@@ -132,7 +136,7 @@ public class TemplateProcessorTest {
                 import java.util.Date;
                 
                 // generated from x.y.Klass
-                public class KlassDoubleDate {
+                public class DoubleDateKlass {
                     private double t1;
                     private Date t2;
                     
@@ -143,7 +147,7 @@ public class TemplateProcessorTest {
                 }
                 """;
 
-        checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.KlassDoubleDate", expectedTarget1);
+        checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.DoubleDateKlass", expectedTarget1);
 
         String expectedTarget2 = """
                 package x.y;
@@ -151,7 +155,7 @@ public class TemplateProcessorTest {
                 import java.util.Date;
                 
                 // generated from x.y.Klass
-                public class KlassStringFloat {
+                public class StringFloatKlass {
                     private String t1;
                     private Float t2;
                     
@@ -162,7 +166,7 @@ public class TemplateProcessorTest {
                 }
                 """;
 
-        checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.KlassStringFloat", expectedTarget2);
+        checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.StringFloatKlass", expectedTarget2);
     }
 
     private static List<String> toList(String s) {

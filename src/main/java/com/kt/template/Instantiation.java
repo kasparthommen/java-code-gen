@@ -9,7 +9,7 @@ public @interface Instantiation {
      * The concrete types to replace the type parameters with. The number of concrete types must match
      * the number of type arguments.
      */
-    Class<?>[] value();
+    Class<?>[] types();
 
     /**
      * An optional list of regex string replacements to apply on top of the generic type replacements.

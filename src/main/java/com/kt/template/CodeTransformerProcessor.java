@@ -20,11 +20,11 @@ import java.util.function.Predicate;
 import static com.kt.template.CodeGenerationHelper.FQ_TO_CLASS;
 import static com.kt.template.CodeGenerationHelper.FQ_TO_PACKAGE;
 import static com.kt.template.CodeGenerationHelper.SOURCE_CLASS_NAME_PLACEHOLDER;
-import static com.kt.template.CodeGenerationHelper.applyReplacements;
 import static com.kt.template.CodeGenerationHelper.findSourceDirectory;
 import static com.kt.template.CodeGenerationHelper.readSourceCode;
 import static com.kt.template.CodeGenerationHelper.removeAnnotationAndAddSourceFileComment;
 import static com.kt.template.CodeGenerationHelper.removeImport;
+import static com.kt.template.CodeGenerationHelper.replace;
 import static com.kt.template.CodeGenerationHelper.writeFile;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
@@ -116,7 +116,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
 
         targetCode = removeAnnotationAndAddSourceFileComment(targetCode, CodeTransformer.class);
 
-        targetCode = applyReplacements(replacements, targetCode);
+        targetCode = replace(replacements, targetCode);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
         targetCode = targetCode.replace(SOURCE_CLASS_NAME_PLACEHOLDER, fullyQualifiedSourceClassName);

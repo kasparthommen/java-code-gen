@@ -65,7 +65,7 @@ public class CodeTransformerProcessorTest {
                       })
                     )
                     public  class Before<T, U> {
-                      int int1;
+                      int int1;  // xx
                       
                       public Before(int q) {
                         this.int1 = q;
@@ -78,13 +78,13 @@ public class CodeTransformerProcessorTest {
                     
                     // generated from x.y.Before
                     public  class After<T, U> {
-                      long long1;
+                      long long1;  // trying to make the parser stumble: $$$$
                       
                       public After(long p) {
                         this.long1 = p;
                       }
                     }
-                    """;
+                    """.replace("$$$$", cheekyString.replace("\\\"", "\""));
 
             checkTransform(new CodeTransformerProcessor(), "x.y.Before", source, "x.y.After", expectedTarget);
         }

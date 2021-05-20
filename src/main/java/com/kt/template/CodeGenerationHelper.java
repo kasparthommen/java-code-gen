@@ -127,7 +127,7 @@ class CodeGenerationHelper {
         }
     }
 
-    static String applyReplacements(Replace[] replacements, String code) {
+    static String replace(Replace[] replacements, String code) throws CodeGenerationException {
         for (Replace replacement : replacements) {
             String regexFrom = replacement.from();
             String to = replacement.to();
@@ -136,11 +136,13 @@ class CodeGenerationHelper {
         return code;
     }
 
-    static String replaceRegex(String code, String regexFrom, String to) {
+    static String replaceRegex(String code, String regexFrom, String to) throws CodeGenerationException {
         Pattern pattern = Pattern.compile(regexFrom, Pattern.MULTILINE | Pattern.DOTALL);
         Matcher matcher = pattern.matcher(code);
         if (matcher.find()) {
             code = matcher.replaceAll(to);
+        } else {
+            throw new CodeGenerationException("Regex search term not found: " + regexFrom);
         }
         return code;
     }

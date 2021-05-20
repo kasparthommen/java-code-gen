@@ -25,12 +25,12 @@ import static com.kt.template.CodeGenerationHelper.FIRST_UPPER;
 import static com.kt.template.CodeGenerationHelper.FQ_TO_CLASS;
 import static com.kt.template.CodeGenerationHelper.FQ_TO_PACKAGE;
 import static com.kt.template.CodeGenerationHelper.SOURCE_CLASS_NAME_PLACEHOLDER;
-import static com.kt.template.CodeGenerationHelper.applyReplacements;
 import static com.kt.template.CodeGenerationHelper.findSourceDirectory;
 import static com.kt.template.CodeGenerationHelper.indexOfRegex;
 import static com.kt.template.CodeGenerationHelper.readSourceCode;
 import static com.kt.template.CodeGenerationHelper.removeAnnotationAndAddSourceFileComment;
 import static com.kt.template.CodeGenerationHelper.removeImport;
+import static com.kt.template.CodeGenerationHelper.replace;
 import static com.kt.template.CodeGenerationHelper.replaceRegex;
 import static com.kt.template.CodeGenerationHelper.skipBrackets;
 import static com.kt.template.CodeGenerationHelper.writeFile;
@@ -83,7 +83,7 @@ public class TemplateProcessor extends AbstractProcessor {
                                                .map(FQ_TO_CLASS)
                                                .toArray(String[]::new);
             if (concreteTypeNames.length != typeParameters.size()) {
-                throw new CodeGenerationException("Expected " + typeParameters.size() + " type parameters, got " + instantiation.value());
+                throw new CodeGenerationException("Expected " + typeParameters.size() + " type parameters, got " + instantiation.types());
             }
             messager.printMessage(NOTE, "Instantiating " + sourceClass.getQualifiedName() + " for " + Arrays.toString(concreteTypeNames));
             String typeNames = Arrays.stream(concreteTypeNames)
@@ -110,7 +110,7 @@ public class TemplateProcessor extends AbstractProcessor {
         // uses this trick:
         // https://stackoverflow.com/questions/7687829/java-6-annotation-processing-getting-a-class-from-an-annotation/52793839#52793839
         try {
-            instantiation.value();
+            instantiation.types();
         } catch (MirroredTypesException mtex) {
             List<? extends TypeMirror> typeMirrors = mtex.getTypeMirrors();
             return typeMirrors.isEmpty() ? null : typeMirrors.toArray(TypeMirror[]::new);
@@ -135,6 +135,7 @@ public class TemplateProcessor extends AbstractProcessor {
         targetCode = removeImport(targetCode, Template.class.getName());
         targetCode = removeImport(targetCode, Instantiation.class.getName());
         targetCode = removeImport(targetCode, Replace.class.getName());
+        targetCode = removeImport(targetCode, TypeNamePosition.class.getName());
 
         targetCode = removeAnnotationAndAddSourceFileComment(targetCode, Template.class);
 
@@ -145,7 +146,7 @@ public class TemplateProcessor extends AbstractProcessor {
             targetCode = targetCode.replaceAll("\\b" + FQ_TO_CLASS.apply(typeParam) + "\\b", concreteType);
         }
 
-        targetCode = applyReplacements(replacements, targetCode);
+        targetCode = replace(replacements, targetCode);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
         targetCode = targetCode.replace(SOURCE_CLASS_NAME_PLACEHOLDER, fullyQualifiedSourceClassName);
