@@ -19,15 +19,12 @@ import java.io.PrintWriter;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
@@ -48,7 +45,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         for (Element element : roundEnv.getElementsAnnotatedWith(CodeTransformer.class)) {
             TypeElement sourceClass = (TypeElement) element;
             messager.printMessage(NOTE, "Creating class replacements for " + sourceClass.getQualifiedName());
-            CodeTransformer template = sourceClass.getAnnotation(CodeTransformer.class);
+            CodeTransformer transformer = sourceClass.getAnnotation(CodeTransformer.class);
 
             // find source file
             Path classFileDir;
@@ -58,10 +55,10 @@ public class CodeTransformerProcessor extends AbstractProcessor {
                 messager.printMessage(ERROR, ex.getMessage());
                 return true;
             }
-            Path sourceDir = classFileDir.resolve(template.relativeSourceDir()).normalize();
+            Path sourceDir = classFileDir.resolve(transformer.relativeSourceDir()).normalize();
             if (!Files.exists(sourceDir)) {
                 messager.printMessage(ERROR, "Source path not found: " + sourceDir
-                        + ". Possibly a mis-specification of the relative source directory (" + template.relativeSourceDir() + ")?");
+                        + ". Possibly a mis-specification of the relative source directory (" + transformer.relativeSourceDir() + ")?");
                 return true;
             }
             messager.printMessage(NOTE, "sourceDir=" + sourceDir);
@@ -82,56 +79,45 @@ public class CodeTransformerProcessor extends AbstractProcessor {
                 return true;
             }
 
-            // read replacements
-            List<String[]> replacements = new ArrayList<>();
-            Consumer<String[]> addToListIfNotEmpty = rep -> {
-                if (rep.length > 0) {
-                    replacements.add(rep);
-                }
-            };
-            addToListIfNotEmpty.accept(template.t1());
-            addToListIfNotEmpty.accept(template.t2());
-            addToListIfNotEmpty.accept(template.t3());
-            addToListIfNotEmpty.accept(template.t4());
-            addToListIfNotEmpty.accept(template.t5());
-            addToListIfNotEmpty.accept(template.t6());
-            addToListIfNotEmpty.accept(template.t7());
-            addToListIfNotEmpty.accept(template.t8());
-            addToListIfNotEmpty.accept(template.t9());
-            addToListIfNotEmpty.accept(template.t10());
+            // read replacements and only keep the non-default ones
+            Predicate<Transform> isNonDefault = transform -> !"".equals(transform.targetName());
+            List<Transform> transforms = List.of(
+                    transformer.t1(),
+                    transformer.t2(),
+                    transformer.t3(),
+                    transformer.t4(),
+                    transformer.t5(),
+                    transformer.t6(),
+                    transformer.t7(),
+                    transformer.t8(),
+                    transformer.t9(),
+                    transformer.t10()
+            ).stream().filter(isNonDefault).toList();
 
             // make sure that replacement arrays are consistent
-            if (replacements.size() == 0) {
+            if (transforms.size() == 0) {
                 messager.printMessage(ERROR, "No replacements supplied");
                 return true;
-            }
-            for (int i = 0; i < replacements.size(); i++) {
-                String[] rep = replacements.get(i);
-                if (rep.length % 2 != 1) {
-                    messager.printMessage(ERROR, "Replacement array must contain an odd number of elements: class name plus an " +
-                            "arbitrary number of <from> <to> tuples, but got " + Arrays.toString(rep));
-                    return true;
-                }
             }
 
             // generate target files
             String pkg = FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName);
             String sourceClassName = FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
-            for (int i = 0; i < replacements.size(); i++) {
-                String[] rep = replacements.get(i);
-                String targetClassName = rep[0];
-                String[] froms = IntStream.range(1, rep.length).filter(idx -> idx % 2 == 1).mapToObj(idx -> rep[idx]).toArray(String[]::new);
-                String[] tos = IntStream.range(1, rep.length).filter(idx -> idx % 2 == 0).mapToObj(idx -> rep[idx]).toArray(String[]::new);
-                assert froms.length == tos.length;
+            for (int i = 0; i < transforms.size(); i++) {
+                Transform transform = transforms.get(i);
 
-                String fullyQualifiedTargetClassName = pkg + "." + targetClassName;
-                messager.printMessage(NOTE, "Creating " + targetClassName + " from " + sourceClassName);
+                String fullyQualifiedTargetClassName = pkg + "." + transform.targetName();
+                if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
+                    messager.printMessage(ERROR, "Target class name must be different from source class name, but was "
+                            + fullyQualifiedTargetClassName);
+                    return true;
+                }
+                messager.printMessage(NOTE, "Creating " + fullyQualifiedTargetClassName + " from " + sourceClassName);
                 String targetCode = generateTarget(
                         source,
                         fullyQualifiedSourceClassName,
                         fullyQualifiedTargetClassName,
-                        froms,
-                        tos);
+                        transform.replacements());
 
                 writeFile(targetCode, fullyQualifiedTargetClassName, messager);
             }
@@ -140,59 +126,75 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         return true;
     }
 
-    public static String generateTarget(
+    private static String generateTarget(
             String source,
             String fullyQualifiedSourceClassName,
             String fullyQualifiedTargetClassName,
-            String[] froms,
-            String[] tos) {
+            Replace[] replacements) {
         String sourceClassName = FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
         String targetClassName = FQ_TO_CLASS.apply(fullyQualifiedTargetClassName);
 
         String target = source;
 
-        // remove CodeTransformer import
-        String importStatement = "\nimport " + CodeTransformer.class.getName() + ";\n";
-        for (int emptyLinesBefore = 2; emptyLinesBefore >= 0; emptyLinesBefore--) {
-            String before = "\n".repeat(emptyLinesBefore);
-            for (int emptyLinesAfter = 2; emptyLinesAfter >= 0; emptyLinesAfter--) {
-                String after = "\n".repeat(emptyLinesAfter);
-                String emptyLines = "\n".repeat(1 + Math.max(emptyLinesBefore, emptyLinesAfter));
-                target = target.replace(before + importStatement + after, emptyLines);
-            }
-        }
+        // remove imports
+        target = removeImport(target, CodeTransformer.class.getName());
+        target = removeImport(target, Transform.class.getName());
+        target = removeImport(target, Replace.class.getName());
 
         // remove @CodeTransformer(...) annotation
         String annotation = "@" + CodeTransformer.class.getSimpleName();
-        int idx = target.indexOf(annotation);
+        int annotationStartIndex = target.indexOf(annotation);
         target = target.replace(annotation, "");
         int parenthesisCount = 0;
-        int idx2 = idx;
+        int annotationEndIndex = annotationStartIndex;
+        boolean inString = false;
+        charLoop:
         while (true) {
-            if (idx2 >= target.length()) {
-                throw new IllegalStateException(target);
+            if (annotationEndIndex >= target.length()) {
+                throw new IllegalStateException("Internal error: Reached end target source file but didn't find end of annotation");
             }
-            char c = target.charAt(idx2);
-            if (c == '(') {
-                parenthesisCount++;
-            } else if (c == ')') {
-                parenthesisCount--;
-                if (parenthesisCount == 0) {
-                    target = target.substring(0, idx)
-                            + "// generated from $$$$"
-                            + target.substring(idx2 + 1);
-                    break;
+            char c = target.charAt(annotationEndIndex);
+
+            if (inString) {
+                // handle escapes when walking through strings
+                switch (c) {
+                    case '\\':
+                        // escaped character -> skip over next
+                        annotationEndIndex++;
+                        break;
+                    case '\"':
+                        // end of string
+                        inString = false;
+                        break;
+                }
+            } else {
+                // outside string
+                switch (c) {
+                    case '\"':
+                        inString = true;
+                        break;
+                    case '(':
+                        parenthesisCount++;
+                        break;
+                    case ')':
+                        parenthesisCount--;
+                        if (parenthesisCount == 0) {
+                            target = target.substring(0, annotationStartIndex)
+                                    + "// generated from $$$$"
+                                    + target.substring(annotationEndIndex + 1);
+                            break charLoop;
+                        }
                 }
             }
-            idx2++;
+            annotationEndIndex++;
         }
 
         // process custom replacements
-        for (int i = 0; i < froms.length; i++) {
-            Pattern pattern = Pattern.compile(froms[i], Pattern.MULTILINE | Pattern.DOTALL);
+        for (Replace replacement : replacements) {
+            Pattern pattern = Pattern.compile(replacement.from(), Pattern.MULTILINE | Pattern.DOTALL);
             Matcher matcher = pattern.matcher(target);
             if (matcher.find()) {
-                target = matcher.replaceAll(tos[i]);
+                target = matcher.replaceAll(replacement.to());
             }
         }
 
@@ -202,6 +204,19 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         // complete replacement comment
         target = target.replace("$$$$", fullyQualifiedSourceClassName);
 
+        return target;
+    }
+
+    private static String removeImport(String target, String fullyQualifiedClassName) {
+        String importStatement = "\nimport " + fullyQualifiedClassName + ";\n";
+        for (int emptyLinesBefore = 2; emptyLinesBefore >= 0; emptyLinesBefore--) {
+            String before = "\n".repeat(emptyLinesBefore);
+            for (int emptyLinesAfter = 2; emptyLinesAfter >= 0; emptyLinesAfter--) {
+                String after = "\n".repeat(emptyLinesAfter);
+                String emptyLines = "\n".repeat(1 + Math.max(emptyLinesBefore, emptyLinesAfter));
+                target = target.replace(before + importStatement + after, emptyLines);
+            }
+        }
         return target;
     }
 

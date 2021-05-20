@@ -26,8 +26,8 @@ public @interface Template {
     boolean appendTypeNames() default true;
 
     /**
-     * An optional array of two entries the first one being a string to search in the generated class
-     * name and the secona one its replacement.
+     * An optional array of two entries with the first one being a string to search in the generated class
+     * name and the second one being its replacement.
      */
     String[] classNameReplacement() default {};
 
@@ -47,10 +47,11 @@ public @interface Template {
     Class<?>[] types3() default {};
 
     /**
-     * An optional array composed of concatenated triplets of the form [fullyQualifiedTypeName, from, to]
-     * that represents custom string replacements that go beyond simple type replacements. For example,
-     * the replacement triplet <code>{ "double", "(T1[]) new Object[", "new double[" }</code>
-     * would be useful to convert generic type array construction to double array construction.
+     * An optional array composed of concatenated triplets of the form
+     * {@code [fullyQualifiedTypeName, from, to]} that represents custom string replacements that go beyond
+     * simple type replacements. For example, the replacement triplet
+     * <code>{ "double", "(T1[]) new Object[", "new double[" }</code> would be useful to convert generic
+     * type array construction to double array construction.
      */
     String[] replacements() default {};
 }

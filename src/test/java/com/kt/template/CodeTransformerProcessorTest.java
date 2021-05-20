@@ -3,18 +3,22 @@ package com.kt.template;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.kt.template.CodeGenerationTestHelper.checkTransform;
 
 
 public class CodeTransformerProcessorTest {
     @Test
-    public void klassRename() {
+    public void classRename() throws Exception {
         String source = """
                 package x.y;
                 
                 import com.kt.template.CodeTransformer;
+                import com.kt.template.Replace;
+                import com.kt.template.Transform;
 
-                @CodeTransformer(r1 = { "After" })
+                @CodeTransformer(
+                    t1 = @Transform(targetName = "After", replacements = {})
+                )
                 public  class Before<T, U> {  // Beforex 1Before Before
                   int q;
                   
@@ -36,218 +40,241 @@ public class CodeTransformerProcessorTest {
                   }
                 }
                 """;
-        assertEquals(expectedTarget,
-                CodeTransformerProcessor.generateTarget(
-                        source,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+
+        checkTransform(new CodeTransformerProcessor(), "x.y.Before", source, "x.y.After", expectedTarget);
     }
 
     @Test
-    public void klassRenameAndReplacements() {
-        String source = """
+    public void klassRenameAndReplacements() throws Exception {
+        for (String cheekyString : new String[] { "(", ")", "[", "]", "{", "}", "@", "\\\"" }) {
+            String source = """
+                    package x.y;
+                    
+                    import com.kt.template.CodeTransformer;
+                    import com.kt.template.Replace;
+                    import com.kt.template.Transform;
+    
+                    @CodeTransformer
+                    
+                      ( t1
+                         =@Transform(targetName    ="After"
+                         , replacements=     {
+                        @Replace(from="q", to="p"),
+                        @Replace(from = "int",
+                          to = "long"),  @Replace(from = "xx", to="trying to make the parser stumble: $$$$")
+                      })
+                    )
+                    public  class Before<T, U> {
+                      int int1;
+                      
+                      public Before(int q) {
+                        this.int1 = q;
+                      }
+                    }
+                    """.replace("$$$$", cheekyString);
+
+            String expectedTarget = """
+                    package x.y;
+                    
+                    // generated from x.y.Before
+                    public  class After<T, U> {
+                      long long1;
+                      
+                      public After(long p) {
+                        this.long1 = p;
+                      }
+                    }
+                    """;
+
+            checkTransform(new CodeTransformerProcessor(), "x.y.Before", source, "x.y.After", expectedTarget);
+        }
+    }
+
+    @Test
+    public void importRemoval() throws Exception {
+        checkTransform(
+                new CodeTransformerProcessor(),
+                "x.y.Before",
+
+                """
                 package x.y;
                 
                 import com.kt.template.CodeTransformer;
+                import com.kt.template.Transform;
 
-                @CodeTransformer
-                
-                  (
-                  r1 = {
-                    "After",
-                    "q", "p",
-                    "int", "long",
-                    "(cheeky parenthesis)", "foo"
-                  }
-                )
-                public  class Before<T, U> {
-                  int int1;
-                  
-                  public Before(int q) {
-                    this.int1 = q;
-                  }
-                }
-                """;
+                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                public  class Before<T, U> {}
+                """,
 
-        String expectedTarget = """
-                package x.y;
-                
-                // generated from x.y.Before
-                public  class After<T, U> {
-                  long int1;
-                  
-                  public After(long p) {
-                    this.int1 = p;
-                  }
-                }
-                """;
-        assertEquals(expectedTarget,
-                CodeTransformerProcessor.generateTarget(
-                        source,
-                        "x.y.Before", "x.y.After",
-                        new String[] { "q", "\\bint\\b" },
-                        new String[] { "p", "long" }));
-    }
+                "x.y.After",
 
-    @Test
-    public void importRemoval() {
-        assertEquals(
                 """
                 package x.y;
                 
                 // generated from x.y.Before
                 public  class After<T, U> {}
-                """,
-                CodeTransformerProcessor.generateTarget(
-                        """
-                        package x.y;
-                        
-                        import com.kt.template.CodeTransformer;
-        
-                        @CodeTransformer(r1 = { "After" })
-                        public  class Before<T, U> {}
-                        """,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+                """);
 
-        assertEquals(
+        checkTransform(
+                new CodeTransformerProcessor(),
+                "x.y.Before",
+
+                """
+                package x.y;
+
+                
+                import com.kt.template.CodeTransformer;
+                import com.kt.template.Transform;
+
+                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+
+                public  class Before<T, U> {}
+                """,
+
+                "x.y.After",
+
                 """
                 package x.y;
 
                 
                 // generated from x.y.Before
                 public  class After<T, U> {}
+                """);
+
+        checkTransform(
+                new CodeTransformerProcessor(),
+                "x.y.Before",
+
+                """
+                package x.y;
+
+                import com.kt.template.CodeTransformer;
+                import com.kt.template.Transform;
+                
+
+                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+
+                public  class Before<T, U> {}
                 """,
-                CodeTransformerProcessor.generateTarget(
-                        """
-                        package x.y;
 
-                        
-                        import com.kt.template.CodeTransformer;
-        
-                        @CodeTransformer(r1 = { "After" })
-                        public  class Before<T, U> {}
-                        """,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+                "x.y.After",
 
-        assertEquals(
                 """
                 package x.y;
 
                 
                 // generated from x.y.Before
                 public  class After<T, U> {}
+                """);
+
+        checkTransform(
+                new CodeTransformerProcessor(),
+                "x.y.Before",
+
+                """
+                package x.y;
+
+
+                import com.kt.template.CodeTransformer;
+                import com.kt.template.Transform;
+                
+
+                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+
+                public  class Before<T, U> {}
                 """,
-                CodeTransformerProcessor.generateTarget(
-                        """
-                        package x.y;
 
-                        import com.kt.template.CodeTransformer;
-                        
-        
-                        @CodeTransformer(r1 = { "After" })
-                        public  class Before<T, U> {}
-                        """,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+                "x.y.After",
 
-        assertEquals(
                 """
                 package x.y;
 
                 
                 // generated from x.y.Before
                 public  class After<T, U> {}
+                """);
+
+        checkTransform(
+                new CodeTransformerProcessor(),
+                "x.y.Before",
+
+                """
+                package x.y;
+                
+                import java.lang.Math;
+                import com.kt.template.CodeTransformer;
+                import com.kt.template.Transform;
+
+                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+
+                public  class Before<T, U> {}
                 """,
-                CodeTransformerProcessor.generateTarget(
-                        """
-                        package x.y;
 
+                "x.y.After",
 
-                        import com.kt.template.CodeTransformer;
-                        
-        
-                        @CodeTransformer(r1 = { "After" })
-                        public  class Before<T, U> {}
-                        """,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+                """
+                package x.y;
+                
+                import java.lang.Math;
+                
+                // generated from x.y.Before
+                public  class After<T, U> {}
+                """);
 
-        assertEquals(
-                        """
-                        package x.y;
-                        
-                        import a.A;
-                        
-                        // generated from x.y.Before
-                        public  class After<T, U> {}
-                        """,
-                CodeTransformerProcessor.generateTarget(
-                        """
-                        package x.y;
-                        
-                        import a.A;
-                        import com.kt.template.CodeTransformer;
-        
-                        @CodeTransformer(r1 = { "After" })
-                        public  class Before<T, U> {}
-                        """,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+        checkTransform(
+                new CodeTransformerProcessor(),
+                "x.y.Before",
 
-        assertEquals(
-                        """
-                        package x.y;
-                        
-                        import b.B;
+                """
+                package x.y;
+                
+                import com.kt.template.CodeTransformer;
+                import com.kt.template.Transform;
+                import java.util.Date;
 
-                        // generated from x.y.Before
-                        public  class After<T, U> {}
-                        """,
-                CodeTransformerProcessor.generateTarget(
-                        """
-                        package x.y;
-                        
-                        import com.kt.template.CodeTransformer;
-                        import b.B;
-        
-                        @CodeTransformer(r1 = { "After" })
-                        public  class Before<T, U> {}
-                        """,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
 
-        assertEquals(
-                        """
-                        package x.y;
-                        
-                        import a.A;
-                        import b.B;
-                        
-                        // generated from x.y.Before
-                        public  class After<T, U> {}
-                        """,
-                CodeTransformerProcessor.generateTarget(
-                        """
-                        package x.y;
-                        
-                        import a.A;
-                        import com.kt.template.CodeTransformer;
-                        import b.B;
-        
-                        @CodeTransformer(r1 = { "After" })
-                        public  class Before<T, U> {}
-                        """,
-                        "x.y.Before", "x.y.After",
-                        new String[] {},
-                        new String[] {}));
+                public  class Before<T, U> {}
+                """,
+
+                "x.y.After",
+
+                """
+                package x.y;
+                
+                import java.util.Date;
+
+                // generated from x.y.Before
+                public  class After<T, U> {}
+                """);
+
+        checkTransform(
+                new CodeTransformerProcessor(),
+                "x.y.Before",
+
+                """
+                package x.y;
+                
+                import java.lang.Math;
+                import com.kt.template.CodeTransformer;
+                import com.kt.template.Transform;
+                import java.util.Date;
+
+                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+
+                public  class Before<T, U> {}
+                """,
+
+                "x.y.After",
+
+                """
+                package x.y;
+                
+                import java.lang.Math;
+                import java.util.Date;
+                
+                // generated from x.y.Before
+                public  class After<T, U> {}
+                """);
     }
 }
