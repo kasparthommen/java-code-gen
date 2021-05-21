@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
 /**
  * A C++-like template annotation. Creates concrete class instantiations replacing the generic type arguments
  * with the given concrete classes.

@@ -1,0 +1,322 @@
+= Java Code Generator Annotations
+
+== TL;DR
+This library provides the following code-generating annotations:
+
+* The link:./java-template/src/main/java/com/kt/template/Template.java[`+@Template+`]
+  annotation generates concrete instantiations of generic types analogous
+  to C++ templates
+* The link:./java-template/src/main/java/com/kt/template/CodeTransformer.java[`+@CodeTransformer+`]
+  annotation can perform arbitrary code transformation using regex string replacements
+
+
+== C++ Template Emulation
+=== First Steps
+
+Consider the following generic class (which, of course, would require a lot more work
+before it's a reasonable list implementation):
+[source,java]
+----
+package com.kt.template.demo.list1;
+
+class MyList<T> {
+    private T[] array;
+
+    MyList(int size) {
+        this.array = (T[]) new Object[size];
+    }
+
+    T get(int index) {
+        return array[index];
+    }
+}
+----
+
+You can annotate it with `+@Template+` to e.g. create a concrete String instantiation,
+analogous to C++ templates:
+[source,java]
+----
+package com.kt.template.demo.list2;
+
+import com.kt.template.Instantiation;
+import com.kt.template.Template;
+
+@Template(instantiations = {
+    @Instantiation(types = {String.class}),
+})
+class MyList<T> {
+    private T[] array;
+
+    MyList(int size) {
+        this.array = (T[]) new Object[size];
+    }
+
+    T get(int index) {
+        return array[index];
+    }
+}
+----
+
+This will generate the following class:
+[source,java]
+----
+// generated from com.kt.template.demo.list2.MyList
+package com.kt.template.demo.list2;
+
+class MyListString {
+    private String[] array;
+
+    MyListString(int size) {
+        this.array = (String[]) new Object[size];
+    }
+
+    String get(int index) {
+        return array[index];
+    }
+}
+----
+Nice! However, the `+(String[]) new Object[size]+` expression doesn't make much sense.
+Can we do better? Yes, with a custom string replacement, see below.
+
+
+=== Custom String Replacements
+Simply replacing a generic type with a concrete type like we just did doesn't usually
+get us all the way, but fret not, there are custom string replacements:
+[source,java]
+----
+package com.kt.template.demo.list3;
+
+import com.kt.template.Instantiation;
+import com.kt.template.Replace;
+import com.kt.template.Template;
+
+@Template(instantiations = {
+    @Instantiation(
+        types = {String.class},
+        replacements = {
+            @Replace(from = "(T[]) new Object[size]", to = "new String[size]")
+        }
+    )
+})
+class MyList<T> {
+    private T[] array;
+
+    MyList(int size) {
+        this.array = (T[]) new Object[size];
+    }
+
+    T get(int index) {
+        return array[index];
+    }
+}
+----
+
+And our list compiles:
+[source,java]
+----
+// generated from com.kt.template.demo.list3.MyList
+package com.kt.template.demo.list3;
+
+class MyListString {
+    private String[] array;
+
+    MyListString(int size) {
+        this.array = new String[size];
+    }
+
+    String get(int index) {
+        return array[index];
+    }
+}
+----
+
+
+=== Primitives
+How about adding a primitive version  our list? Eays, just specify the `+double+` type
+on top:
+[source,java]
+----
+package com.kt.template.demo.list4;
+
+import com.kt.template.Instantiation;
+import com.kt.template.Replace;
+import com.kt.template.Template;
+
+@Template(instantiations = {
+    @Instantiation(
+        types = {String.class},
+        replacements = {
+            @Replace(from = "(T[]) new Object[size]", to = "new String[size]")
+        }
+    ),
+    @Instantiation(
+        types = {double.class},
+        replacements = {
+            @Replace(from = "(T[]) new Object[size]", to = "new double[size]")
+        }
+    )
+})
+class MyList<T> {
+    private T[] array;
+
+    MyList(int size) {
+        this.array = (T[]) new Object[size];
+    }
+
+    T get(int index) {
+        return array[index];
+    }
+}
+----
+
+which produces `+MyListString+` from above plus the following class:
+[source,java]
+----
+// generated from com.kt.template.demo.list4.MyList
+package com.kt.template.demo.list4;
+
+class MyListDouble {
+    private double[] array;
+
+    MyListDouble(int size) {
+        this.array = new double[size];
+    }
+
+    double get(int index) {
+        return array[index];
+    }
+}
+----
+
+
+=== Multiple Type Parameters
+If your generic class has more than one type parameter then you'll simply have to provide
+the necessary number of concrete types for each instantiation:
+[source,java]
+----
+package com.kt.template.demo.map;
+
+import com.kt.template.Instantiation;
+import com.kt.template.Template;
+
+import java.time.Instant;
+
+@Template(instantiations = {
+    @Instantiation(types = {String.class, Instant.class }),  // <-- two concrete types
+    // ... more instantiations
+})
+class MyMap<K, V> {                                          // <-- two type parameters
+    private K[] keys;
+    private K[] values;
+
+    // ...
+}
+----
+
+
+=== Options
+The following options allow for more flexibility:
+
+* link:./java-template/src/main/java/com/kt/template/Template.java[`+@Template+`]
+
+  ** For projects that don't follow the maven directory layout you can specify the relative
+     source folder with `+relativeSourceDir+`.
+  ** I you prefer prepending the type to the class rather than the default appending variant
+     (i.e., `+StringMyList+` rather than `+MyListString+` in the example above) then
+     you can change `+typeNamePosition+`.
+
+* link:./java-template/src/main/java/com/kt/template/Replace.java[`+@Replace+`]
+
+  ** If normal string replacement won't cut it you can set `+replaceType+` to
+     `+ReplaceType.REGEX+`.
+
+
+
+== Code Transformer
+If you want to generate derived versions of a class but template instantiation is not the
+right tool for the job, then the more generic
+link:./java-template/src/main/java/com/kt/template/CodeTransformer.java[`+@CodeTransformer+`]
+is for you.
+
+Say you have a custom primitive list that you have implemented for `+double+`:
+[source,java]
+----
+package com.kt.template.demo.double1;
+
+public class MyDoubleList {
+    private double[] array;
+
+    MyDoubleList(int size) {
+        this.array = new double[size];
+    }
+
+    // ...
+}
+----
+
+Now, instead of copying and pasting this code a handful of times to create equivalent
+implementations for other primitive types (which is both tedious and error-prone) you
+can do the following instead:
+
+[source,java]
+----
+package com.kt.template.demo.double2;
+
+import com.kt.template.CodeTransformer;
+import com.kt.template.Replace;
+import com.kt.template.ReplaceType;
+import com.kt.template.Transform;
+
+@CodeTransformer(transforms = {
+    @Transform(targetName = "MyFloatList", replacements = {
+        @Replace(from = "\\bdouble\\b", to = "float", replaceType = ReplaceType.REGEX)
+    }),
+    @Transform(targetName = "MyLongList", replacements = {
+        @Replace(from = "\\bdouble\\b", to = "long", replaceType = ReplaceType.REGEX)
+    })
+})
+public class MyDoubleList {
+    private double[] array;
+
+    MyDoubleList(int size) {
+        this.array = new double[size];
+    }
+
+    // ...
+}
+----
+
+This will generate two classes:
+[source,java]
+----
+// generated from com.kt.template.demo.double2.MyDoubleList
+package com.kt.template.demo.double2;
+
+public class MyFloatList {
+    private float[] array;
+
+    MyFloatList(int size) {
+        this.array = new float[size];
+    }
+
+    // ...
+}
+----
+
+And:
+
+[source,java]
+----
+// generated from com.kt.template.demo.double2.MyDoubleList
+package com.kt.template.demo.double2;
+
+public class MyLongList {
+    private long[] array;
+
+    MyLongList(int size) {
+        this.array = new long[size];
+    }
+
+    // ...
+}
+----
