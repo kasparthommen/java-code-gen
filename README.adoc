@@ -3,10 +3,10 @@
 == TL;DR
 This library provides the following code-generating annotations:
 
-* The link:./java-template/src/main/java/com/kt/template/Template.java[`+@Template+`]
+* The link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`+@Template+`]
   annotation generates concrete instantiations of generic types analogous
   to C++ templates
-* The link:./java-template/src/main/java/com/kt/template/CodeTransformer.java[`+@CodeTransformer+`]
+* The link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`+@CodeTransformer+`]
   annotation can perform arbitrary code transformation using regex string replacements
 
 
@@ -17,7 +17,7 @@ Consider the following generic class (which, of course, would require a lot more
 before it's a reasonable list implementation):
 [source,java]
 ----
-package com.kt.template.demo.list1;
+package com.kt.codegen.demo.list1;
 
 class MyList<T> {
     private T[] array;
@@ -36,10 +36,10 @@ You can annotate it with `+@Template+` to e.g. create a concrete String instanti
 analogous to C++ templates:
 [source,java]
 ----
-package com.kt.template.demo.list2;
+package com.kt.codegen.demo.list2;
 
-import com.kt.template.Instantiation;
-import com.kt.template.Template;
+import com.kt.codegen.Instantiation;
+import com.kt.codegen.Template;
 
 @Template(instantiations = {
     @Instantiation(types = {String.class}),
@@ -60,8 +60,8 @@ class MyList<T> {
 This will generate the following class:
 [source,java]
 ----
-// generated from com.kt.template.demo.list2.MyList
-package com.kt.template.demo.list2;
+// generated from com.kt.codegen.demo.list2.MyList
+package com.kt.codegen.demo.list2;
 
 class MyListString {
     private String[] array;
@@ -84,11 +84,11 @@ Simply replacing a generic type with a concrete type like we just did doesn't us
 get us all the way, but fret not, there are custom string replacements:
 [source,java]
 ----
-package com.kt.template.demo.list3;
+package com.kt.codegen.demo.list3;
 
-import com.kt.template.Instantiation;
-import com.kt.template.Replace;
-import com.kt.template.Template;
+import com.kt.codegen.Instantiation;
+import com.kt.codegen.Replace;
+import com.kt.codegen.Template;
 
 @Template(instantiations = {
     @Instantiation(
@@ -114,8 +114,8 @@ class MyList<T> {
 And our list compiles:
 [source,java]
 ----
-// generated from com.kt.template.demo.list3.MyList
-package com.kt.template.demo.list3;
+// generated from com.kt.codegen.demo.list3.MyList
+package com.kt.codegen.demo.list3;
 
 class MyListString {
     private String[] array;
@@ -136,11 +136,11 @@ How about adding a primitive version  our list? Eays, just specify the `+double+
 on top:
 [source,java]
 ----
-package com.kt.template.demo.list4;
+package com.kt.codegen.demo.list4;
 
-import com.kt.template.Instantiation;
-import com.kt.template.Replace;
-import com.kt.template.Template;
+import com.kt.codegen.Instantiation;
+import com.kt.codegen.Replace;
+import com.kt.codegen.Template;
 
 @Template(instantiations = {
     @Instantiation(
@@ -172,8 +172,8 @@ class MyList<T> {
 which produces `+MyListString+` from above plus the following class:
 [source,java]
 ----
-// generated from com.kt.template.demo.list4.MyList
-package com.kt.template.demo.list4;
+// generated from com.kt.codegen.demo.list4.MyList
+package com.kt.codegen.demo.list4;
 
 class MyListDouble {
     private double[] array;
@@ -194,10 +194,10 @@ If your generic class has more than one type parameter then you'll simply have t
 the necessary number of concrete types for each instantiation:
 [source,java]
 ----
-package com.kt.template.demo.map;
+package com.kt.codegen.demo.map;
 
-import com.kt.template.Instantiation;
-import com.kt.template.Template;
+import com.kt.codegen.Instantiation;
+import com.kt.codegen.Template;
 
 import java.time.Instant;
 
@@ -214,7 +214,7 @@ class MyMap<K, V> {                                          // <-- two type par
 === Options
 The following options allow for more flexibility:
 
-* link:./java-template/src/main/java/com/kt/template/Template.java[`+@Template+`]
+* link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`+@Template+`]
 
   ** For projects that don't follow the maven directory layout you can specify the relative
      source folder with `+relativeSourceDir+`.
@@ -222,23 +222,23 @@ The following options allow for more flexibility:
      (i.e., `+StringMyList+` rather than `+MyListString+` in the example above) then
      you can change `+typeNamePosition+`.
 
-* link:./java-template/src/main/java/com/kt/template/Replace.java[`+@Replace+`]
+* link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`+@Replace+`]
 
-  ** If normal string replacement won't cut it you can set `+replaceType+` to
-     `+ReplaceType.REGEX+`.
+  ** If normal string replacement won't cut it you can set `+regex+` to
+     `+true+`.
 
 
 
 == Code Transformer
 If you want to generate derived versions of a class but template instantiation is not the
 right tool for the job, then the more generic
-link:./java-template/src/main/java/com/kt/template/CodeTransformer.java[`+@CodeTransformer+`]
+link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`+@CodeTransformer+`]
 is for you.
 
 Say you have a custom primitive list that you have implemented for `+double+`:
 [source,java]
 ----
-package com.kt.template.demo.double1;
+package com.kt.codegen.demo.double1;
 
 public class MyDoubleList {
     private double[] array;
@@ -256,19 +256,18 @@ implementations for other primitive type you can do the following instead:
 
 [source,java]
 ----
-package com.kt.template.demo.double2;
+package com.kt.codegen.demo.double2;
 
-import com.kt.template.CodeTransformer;
-import com.kt.template.Replace;
-import com.kt.template.ReplaceType;
-import com.kt.template.Transform;
+import com.kt.codegen.CodeTransformer;
+import com.kt.codegen.Replace;
+import com.kt.codegen.Transform;
 
 @CodeTransformer(transforms = {
     @Transform(targetName = "MyFloatList", replacements = {
-        @Replace(from = "\\bdouble\\b", to = "float", replaceType = ReplaceType.REGEX)
+        @Replace(from = "\\bdouble\\b", to = "float", regex = true)
     }),
     @Transform(targetName = "MyLongList", replacements = {
-        @Replace(from = "\\bdouble\\b", to = "long", replaceType = ReplaceType.REGEX)
+        @Replace(from = "\\bdouble\\b", to = "long", regex = true)
     })
 })
 public class MyDoubleList {
@@ -285,8 +284,8 @@ public class MyDoubleList {
 This will generate two classes:
 [source,java]
 ----
-// generated from com.kt.template.demo.double2.MyDoubleList
-package com.kt.template.demo.double2;
+// generated from com.kt.codegen.demo.double2.MyDoubleList
+package com.kt.codegen.demo.double2;
 
 public class MyFloatList {
     private float[] array;
@@ -303,8 +302,8 @@ And:
 
 [source,java]
 ----
-// generated from com.kt.template.demo.double2.MyDoubleList
-package com.kt.template.demo.double2;
+// generated from com.kt.codegen.demo.double2.MyDoubleList
+package com.kt.codegen.demo.double2;
 
 public class MyLongList {
     private long[] array;
