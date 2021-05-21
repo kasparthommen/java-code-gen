@@ -7,8 +7,10 @@ This library provides the following code-generating annotations:
   annotation generates concrete instantiations of generic types analogous
   to C++ templates
 * The link:./java-template/src/main/java/com/kt/template/CodeTransformer.java[`+@CodeTransformer+`]
-  annotation can perform arbitrary code transformation using regex string replacements
+  annotation can perform arbitrary code transformation using plain or reges string replacements
 
+
+:toc:
 
 == C++ Template Emulation
 === First Steps
