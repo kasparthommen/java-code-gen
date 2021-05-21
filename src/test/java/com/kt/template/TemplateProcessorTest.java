@@ -33,12 +33,12 @@ public class TemplateProcessorTest {
                 """;
 
         String expectedTarget = """
+                // generated from x.y.Klass
                 package x.y;
                             
                 import java.util.Date;
                 import java.util.List;
                 
-                // generated from x.y.Klass
                 public class KlassDate   {
                     private List<Date> list;
                     
@@ -70,9 +70,9 @@ public class TemplateProcessorTest {
                 """;
 
         String expectedTarget = """
+                // generated from x.y.PrimitiveSequence
                 package x.y;
 
-                // generated from x.y.PrimitiveSequence
                 public interface PrimitiveSequenceInt {
                     default int get(int index) {
                         return getImpl(index);
@@ -131,11 +131,11 @@ public class TemplateProcessorTest {
                 """;
 
         String expectedTarget1 = """
+                // generated from x.y.Klass
                 package x.y;
                             
                 import java.util.Date;
                 
-                // generated from x.y.Klass
                 public class DoubleDateKlass {
                     private double t1;
                     private Date t2;
@@ -150,11 +150,11 @@ public class TemplateProcessorTest {
         checkTransform(new TemplateProcessor(), "x.y.Klass", source, "x.y.DoubleDateKlass", expectedTarget1);
 
         String expectedTarget2 = """
+                // generated from x.y.Klass
                 package x.y;
                             
                 import java.util.Date;
                 
-                // generated from x.y.Klass
                 public class StringFloatKlass {
                     private String t1;
                     private Float t2;

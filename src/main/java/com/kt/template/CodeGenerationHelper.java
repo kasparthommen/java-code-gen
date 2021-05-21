@@ -59,19 +59,10 @@ class CodeGenerationHelper {
     }
 
     static String removeImport(String code, String fullyQualifiedClassName) {
-        String importStatement = "\nimport " + fullyQualifiedClassName + ";\n";
-        for (int emptyLinesBefore = 2; emptyLinesBefore >= 0; emptyLinesBefore--) {
-            String before = "\n".repeat(emptyLinesBefore);
-            for (int emptyLinesAfter = 2; emptyLinesAfter >= 0; emptyLinesAfter--) {
-                String after = "\n".repeat(emptyLinesAfter);
-                String emptyLines = "\n".repeat(1 + Math.max(emptyLinesBefore, emptyLinesAfter));
-                code = code.replace(before + importStatement + after, emptyLines);
-            }
-        }
-        return code;
+        return code.replaceAll("[ \\t]*import\\s+" + fullyQualifiedClassName + "\\s*;\\s*\n", "");
     }
 
-    static String removeAnnotationAndAddSourceFileComment(
+    static String removeAnnotation(
             String code,
             Class<?> annotationType,
             String fullyQualifiedSourceClassName) throws CodeGenerationException {
@@ -83,9 +74,10 @@ class CodeGenerationHelper {
 
         code = replaceRegex(code, annotationStartRegex, "(", fullyQualifiedSourceClassName);
         code = skipBrackets('(', ')', code, annotationStartIndex);
-        code = code.substring(0, annotationStartIndex)
-                + "// generated from " + SOURCE_CLASS_NAME_PLACEHOLDER
-                + code.substring(annotationStartIndex);
+        code = code.substring(0, annotationStartIndex) + code.substring(annotationStartIndex);
+        if (code.substring(annotationStartIndex - 2).startsWith("\n\n\n")) {
+            code = code.substring(0, annotationStartIndex) + code.substring(annotationStartIndex + 1);
+        }
         return code;
     }
 

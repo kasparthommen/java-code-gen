@@ -28,7 +28,7 @@ import static com.kt.template.CodeGenerationHelper.SOURCE_CLASS_NAME_PLACEHOLDER
 import static com.kt.template.CodeGenerationHelper.findSourceDirectory;
 import static com.kt.template.CodeGenerationHelper.indexOfRegex;
 import static com.kt.template.CodeGenerationHelper.readSourceCode;
-import static com.kt.template.CodeGenerationHelper.removeAnnotationAndAddSourceFileComment;
+import static com.kt.template.CodeGenerationHelper.removeAnnotation;
 import static com.kt.template.CodeGenerationHelper.removeImport;
 import static com.kt.template.CodeGenerationHelper.replace;
 import static com.kt.template.CodeGenerationHelper.replaceRegex;
@@ -137,7 +137,7 @@ public class TemplateProcessor extends AbstractProcessor {
         targetCode = removeImport(targetCode, Replace.class.getName());
         targetCode = removeImport(targetCode, TypeNamePosition.class.getName());
 
-        targetCode = removeAnnotationAndAddSourceFileComment(targetCode, Template.class, fullyQualifiedSourceClassName);
+        targetCode = removeAnnotation(targetCode, Template.class, fullyQualifiedSourceClassName);
 
         targetCode = replaceGenericWithConcreteClassDeclaration(targetCode, sourceClassName, targetClassName, fullyQualifiedSourceClassName);
         for (int i = 0; i < typeParameterNames.length; i++) {
@@ -149,6 +149,8 @@ public class TemplateProcessor extends AbstractProcessor {
         targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
+        targetCode = "// generated from " + fullyQualifiedSourceClassName + "\n" + targetCode;
+
         targetCode = targetCode.replace(SOURCE_CLASS_NAME_PLACEHOLDER, fullyQualifiedSourceClassName);
 
         return targetCode;

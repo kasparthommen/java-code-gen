@@ -29,9 +29,9 @@ public class CodeTransformerProcessorTest {
                 """;
 
         String expectedTarget = """
+                // generated from x.y.Before
                 package x.y;
                 
-                // generated from x.y.Before
                 public  class After<T, U> {  // Beforex 1Before After
                   int q;
                   
@@ -74,9 +74,9 @@ public class CodeTransformerProcessorTest {
                     """.replace("$$$$", cheekyString);
 
             String expectedTarget = """
+                    // generated from x.y.Before
                     package x.y;
                     
-                    // generated from x.y.Before
                     public  class After<T, U> {
                       long long1;  // trying to make the parser stumble: $$$$
                       
@@ -99,7 +99,9 @@ public class CodeTransformerProcessorTest {
                 """
                 package x.y;
                 
-                import com.kt.template.CodeTransformer;
+                  import    
+                    com.kt.template.CodeTransformer 
+                     ;
                 import com.kt.template.Transform;
 
                 @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
@@ -109,9 +111,9 @@ public class CodeTransformerProcessorTest {
                 "x.y.After",
 
                 """
+                // generated from x.y.Before
                 package x.y;
                 
-                // generated from x.y.Before
                 public  class After<T, U> {}
                 """);
 
@@ -134,10 +136,10 @@ public class CodeTransformerProcessorTest {
                 "x.y.After",
 
                 """
+                // generated from x.y.Before
                 package x.y;
 
                 
-                // generated from x.y.Before
                 
                 public  class After<T, U> {}
                 """);
@@ -161,10 +163,9 @@ public class CodeTransformerProcessorTest {
                 "x.y.After",
 
                 """
+                // generated from x.y.Before
                 package x.y;
 
-                
-                // generated from x.y.Before
                 
                 public  class After<T, U> {}
                 """);
@@ -188,10 +189,10 @@ public class CodeTransformerProcessorTest {
                 "x.y.After",
 
                 """
+                // generated from x.y.Before
                 package x.y;
 
                 
-                // generated from x.y.Before
                 public  class After<T, U> {}
                 """);
 
@@ -213,11 +214,11 @@ public class CodeTransformerProcessorTest {
                 "x.y.After",
 
                 """
+                // generated from x.y.Before
                 package x.y;
                 
                 import java.lang.Math;
                 
-                // generated from x.y.Before
                 public  class After<T, U> {}
                 """);
 
@@ -239,11 +240,11 @@ public class CodeTransformerProcessorTest {
                 "x.y.After",
 
                 """
+                // generated from x.y.Before
                 package x.y;
                 
                 import java.util.Date;
 
-                // generated from x.y.Before
                 public  class After<T, U> {}
                 """);
 
@@ -266,12 +267,12 @@ public class CodeTransformerProcessorTest {
                 "x.y.After",
 
                 """
+                // generated from x.y.Before
                 package x.y;
                 
                 import java.lang.Math;
                 import java.util.Date;
                 
-                // generated from x.y.Before
                 public  class After<T, U> {}
                 """);
     }
