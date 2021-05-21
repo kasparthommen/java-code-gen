@@ -10,8 +10,5 @@ import java.time.Instant;
     // ... more instantiations
 })
 class MyMap<K, V> {                                          // <-- two type parameters
-    private K[] keys;
-    private K[] values;
-
     // ...
 }

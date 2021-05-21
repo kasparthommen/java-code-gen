@@ -1,16 +1,14 @@
 = Java Code Generator Annotations
 
-=== TL;DR
+== TL;DR
 This library provides the following code-generating annotations:
 
 * The link:./java-template/src/main/java/com/kt/template/Template.java[`+@Template+`]
   annotation generates concrete instantiations of generic types analogous
   to C++ templates
 * The link:./java-template/src/main/java/com/kt/template/CodeTransformer.java[`+@CodeTransformer+`]
-  annotation can perform arbitrary code transformation using plain or reges string replacements
+  annotation can perform arbitrary code transformation using regex string replacements
 
-
-:toc:
 
 == C++ Template Emulation
 === First Steps
@@ -208,9 +206,6 @@ import java.time.Instant;
     // ... more instantiations
 })
 class MyMap<K, V> {                                          // <-- two type parameters
-    private K[] keys;
-    private K[] values;
-
     // ...
 }
 ----
@@ -257,8 +252,7 @@ public class MyDoubleList {
 ----
 
 Now, instead of copying and pasting this code a handful of times to create equivalent
-implementations for other primitive types (which is both tedious and error-prone) you
-can do the following instead:
+implementations for other primitive type you can do the following instead:
 
 [source,java]
 ----
