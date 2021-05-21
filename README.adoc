@@ -1,6 +1,6 @@
 = Java Code Generator Annotations
 
-== TL;DR
+=== TL;DR
 This library provides the following code-generating annotations:
 
 * The link:./java-template/src/main/java/com/kt/template/Template.java[`+@Template+`]
