@@ -6,38 +6,15 @@
 
 
     <groupId>com.kt</groupId>
-    <artifactId>java-template</artifactId>
+    <artifactId>java-template-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
 
-    <properties>
-        <auto-service.version>1.0</auto-service.version>
-    </properties>
-
-
-    <dependencies>
-
-        <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service-annotations</artifactId>
-            <version>${auto-service.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.testing.compile</groupId>
-            <artifactId>compile-testing</artifactId>
-            <version>0.19</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
+    <modules>
+        <module>java-template</module>
+        <module>java-template-demo</module>
+    </modules>
 
 
     <build>
@@ -49,45 +26,26 @@
                 <version>3.8.1</version>
                 <configuration>
                     <release>16</release>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.auto.service</groupId>
-                            <artifactId>auto-service</artifactId>
-                            <version>${auto-service.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
+                <groupId>io.whelk.asciidoc</groupId>
+                <artifactId>asciidoc-template-maven-plugin</artifactId>
+                <configuration>
+                    <templateDirectory>src/doc</templateDirectory>
+                    <templateFile>README-template.adoc</templateFile>
+                    <outputDirectory>./</outputDirectory>
+                    <outputFile>README.adoc</outputFile>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>attach-sources</id>
+                        <phase>package</phase>  <!-- after compile to make sure all generated code is there -->
                         <goals>
-                            <goal>jar</goal>
+                            <goal>build</goal>
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <configuration>
-                    <argLine>--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <configuration>
-                    <argLine>--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</argLine>
-                </configuration>
             </plugin>
 
         </plugins>

@@ -72,7 +72,7 @@ class CodeGenerationHelper {
             throw new CodeGenerationException("Annotation not found: " + annotationType);
         }
 
-        code = replaceRegex(code, annotationStartRegex, "(", fullyQualifiedSourceClassName);
+        code = replace(code, annotationStartRegex, "(", ReplaceType.REGEX, fullyQualifiedSourceClassName);
         code = skipBrackets('(', ')', code, annotationStartIndex);
         code = code.substring(0, annotationStartIndex) + code.substring(annotationStartIndex);
         if (code.substring(annotationStartIndex - 2).startsWith("\n\n\n")) {
@@ -124,22 +124,38 @@ class CodeGenerationHelper {
 
     static String replace(Replace[] replacements, String code, String fullyQualifiedSourceClassName) throws CodeGenerationException {
         for (Replace replacement : replacements) {
-            String regexFrom = replacement.from();
+            String from = replacement.from();
             String to = replacement.to();
-            code = replaceRegex(code, regexFrom, to, fullyQualifiedSourceClassName);
+            code = replace(code, from, to, replacement.replaceType(), fullyQualifiedSourceClassName);
         }
         return code;
     }
 
-    static String replaceRegex(String code, String regexFrom, String to, String fullyQualifiedSourceClassName) throws CodeGenerationException {
-        Pattern pattern = Pattern.compile(regexFrom, Pattern.MULTILINE | Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(code);
-        if (matcher.find()) {
-            code = matcher.replaceAll(to);
-        } else {
-            throw new CodeGenerationException("Regex search term not found in " + fullyQualifiedSourceClassName + ": " + regexFrom);
+    static String replace(
+            String code,
+            String from,
+            String to,
+            ReplaceType replaceType,
+            String fullyQualifiedSourceClassName) throws CodeGenerationException {
+        switch (replaceType) {
+            case PLAIN:
+                if (code.contains(from)) {
+                    return code.replace(from, to);
+                } else {
+                    throw new CodeGenerationException("Search term not found in " + fullyQualifiedSourceClassName + ": " + from);
+                }
+            case REGEX:
+                Pattern pattern = Pattern.compile(from, Pattern.MULTILINE | Pattern.DOTALL);
+                Matcher matcher = pattern.matcher(code);
+                if (matcher.find()) {
+                    code = matcher.replaceAll(to);
+                } else {
+                    throw new CodeGenerationException("Regex search term not found in " + fullyQualifiedSourceClassName + ": " + from);
+                }
+                return code;
+            default:
+                throw new IllegalStateException("Unhandled: " + replaceType);
         }
-        return code;
     }
 
     static int indexOfRegex(String code, String regex) {

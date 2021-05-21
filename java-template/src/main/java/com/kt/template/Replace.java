@@ -22,4 +22,9 @@ public @interface Replace {
      * The string to replace it with.
      */
     String to();
+
+    /**
+     * The string replacement type, either plain or regex. Defaults to plain.
+     */
+    ReplaceType replaceType() default ReplaceType.PLAIN;
 }

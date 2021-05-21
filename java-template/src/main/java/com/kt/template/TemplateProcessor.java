@@ -31,7 +31,6 @@ import static com.kt.template.CodeGenerationHelper.readSourceCode;
 import static com.kt.template.CodeGenerationHelper.removeAnnotation;
 import static com.kt.template.CodeGenerationHelper.removeImport;
 import static com.kt.template.CodeGenerationHelper.replace;
-import static com.kt.template.CodeGenerationHelper.replaceRegex;
 import static com.kt.template.CodeGenerationHelper.skipBrackets;
 import static com.kt.template.CodeGenerationHelper.writeFile;
 import static java.util.stream.Collectors.joining;
@@ -83,7 +82,7 @@ public class TemplateProcessor extends AbstractProcessor {
                                                .map(FQ_TO_CLASS)
                                                .toArray(String[]::new);
             if (concreteTypeNames.length != typeParameters.size()) {
-                throw new CodeGenerationException("Expected " + typeParameters.size() + " type parameters, got " + instantiation.types());
+                throw new CodeGenerationException("Expected " + typeParameters.size() + " type parameters, got " + concreteTypes);
             }
             messager.printMessage(NOTE, "Instantiating " + sourceClass.getQualifiedName() + " for " + Arrays.toString(concreteTypeNames));
             String typeNames = Arrays.stream(concreteTypeNames)
@@ -132,9 +131,12 @@ public class TemplateProcessor extends AbstractProcessor {
 
         String targetCode = sourceCode;
 
+        targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
+
         targetCode = removeImport(targetCode, Template.class.getName());
         targetCode = removeImport(targetCode, Instantiation.class.getName());
         targetCode = removeImport(targetCode, Replace.class.getName());
+        targetCode = removeImport(targetCode, ReplaceType.class.getName());
         targetCode = removeImport(targetCode, TypeNamePosition.class.getName());
 
         targetCode = removeAnnotation(targetCode, Template.class, fullyQualifiedSourceClassName);
@@ -145,8 +147,6 @@ public class TemplateProcessor extends AbstractProcessor {
             String concreteType = concreteTypes[i];
             targetCode = targetCode.replaceAll("\\b" + FQ_TO_CLASS.apply(typeParam) + "\\b", concreteType);
         }
-
-        targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
         targetCode = "// generated from " + fullyQualifiedSourceClassName + "\n" + targetCode;
@@ -168,7 +168,12 @@ public class TemplateProcessor extends AbstractProcessor {
         }
 
         String targetClassDeclaration = targetClassName + "<";
-        code = replaceRegex(code, classDeclarationStartRegex, targetClassDeclaration, fullyQualifiedSourceClassName);
+        code = CodeGenerationHelper.replace(
+            code,
+            classDeclarationStartRegex,
+            targetClassDeclaration,
+            ReplaceType.REGEX,
+            fullyQualifiedSourceClassName);
         int startIndex = code.indexOf(targetClassDeclaration);
         code = skipBrackets('<', '>', code, startIndex + targetClassDeclaration.length() - 1);
         return code;

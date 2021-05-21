@@ -13,9 +13,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import static com.kt.template.CodeGenerationHelper.FQ_TO_CLASS;
 import static com.kt.template.CodeGenerationHelper.FQ_TO_PACKAGE;
@@ -48,7 +46,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
 
     private void process(Element element, Messager messager) throws CodeGenerationException {
         TypeElement sourceClass = (TypeElement) element;
-        messager.printMessage(NOTE, "Creating class replacements for " + sourceClass.getQualifiedName());
+        messager.printMessage(NOTE, "Creating code transform for " + sourceClass.getQualifiedName());
         CodeTransformer transformer = sourceClass.getAnnotation(CodeTransformer.class);
 
         // read source file
@@ -56,32 +54,15 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         String sourceCode = readSourceCode(sourceDir, sourceClass, messager);
         String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
 
-        // read replacements and only keep the non-default ones
-        Predicate<Transform> isNonDefault = transform -> !"".equals(transform.targetName());
-        List<Transform> transforms = List.of(
-                transformer.t1(),
-                transformer.t2(),
-                transformer.t3(),
-                transformer.t4(),
-                transformer.t5(),
-                transformer.t6(),
-                transformer.t7(),
-                transformer.t8(),
-                transformer.t9(),
-                transformer.t10()
-        ).stream().filter(isNonDefault).toList();
-
-        // make sure that replacement arrays are consistent
-        if (transforms.size() == 0) {
-            throw new CodeGenerationException("No replacements supplied");
+        // make sure that transforms arrays are consistent
+        Transform[] transforms = transformer.transforms();
+        if (transforms.length == 0) {
+            throw new CodeGenerationException("No transforms supplied");
         }
 
         // generate target files
         String pkg = FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName);
-        String sourceClassName = FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
-        for (int i = 0; i < transforms.size(); i++) {
-            Transform transform = transforms.get(i);
-
+        for (Transform transform : transforms) {
             String fullyQualifiedTargetClassName = pkg + "." + transform.targetName();
             if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
                 throw new CodeGenerationException(
@@ -92,8 +73,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
                     fullyQualifiedSourceClassName,
                     fullyQualifiedTargetClassName,
                     sourceCode,
-                    transform.replacements()
-            );
+                    transform.replacements());
 
             writeFile(targetCode, fullyQualifiedTargetClassName, processingEnv);
         }
@@ -109,13 +89,14 @@ public class CodeTransformerProcessor extends AbstractProcessor {
 
         String targetCode = sourceCode;
 
+        targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
+
         targetCode = removeImport(targetCode, CodeTransformer.class.getName());
         targetCode = removeImport(targetCode, Transform.class.getName());
         targetCode = removeImport(targetCode, Replace.class.getName());
+        targetCode = removeImport(targetCode, ReplaceType.class.getName());
 
         targetCode = removeAnnotation(targetCode, CodeTransformer.class, fullyQualifiedSourceClassName);
-
-        targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
         targetCode = "// generated from " + fullyQualifiedSourceClassName + "\n" + targetCode;

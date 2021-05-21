@@ -14,11 +14,12 @@ public class CodeTransformerProcessorTest {
                 
                 import com.kt.template.CodeTransformer;
                 import com.kt.template.Replace;
+                import com.kt.template.ReplaceType;
                 import com.kt.template.Transform;
 
-                @CodeTransformer(
-                    t1 = @Transform(targetName = "After", replacements = {})
-                )
+                @CodeTransformer(transforms = {
+                    @Transform(targetName = "After", replacements = {})
+                })
                 public  class Before<T, U> {  // Beforex 1Before Before
                   int q;
                   
@@ -56,13 +57,13 @@ public class CodeTransformerProcessorTest {
     
                     @CodeTransformer
                     
-                      ( t1
-                         =@ Transform ( targetName    ="After"
+                      ( transforms = {
+                         @ Transform ( targetName    ="After"
                          , replacements=     {
                         @Replace(from="q", to="p"),
                         @Replace(from = "int",
                           to = "long"),  @Replace(from = "xx", to="trying to make the parser stumble: $$$$")
-                      })
+                      }) }
                     )
                     public  class Before<T, U> {
                       int int1;  // xx
@@ -104,7 +105,7 @@ public class CodeTransformerProcessorTest {
                      ;
                 import com.kt.template.Transform;
 
-                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                @CodeTransformer(transforms = {@Transform(targetName = "After", replacements = {})})
                 public  class Before<T, U> {}
                 """,
 
@@ -128,7 +129,7 @@ public class CodeTransformerProcessorTest {
                 import com.kt.template.CodeTransformer;
                 import com.kt.template.Transform;
 
-                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                @CodeTransformer(transforms = {@Transform(targetName = "After", replacements = {})})
 
                 public  class Before<T, U> {}
                 """,
@@ -155,7 +156,7 @@ public class CodeTransformerProcessorTest {
                 import com.kt.template.Transform;
                 
 
-                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                @CodeTransformer(transforms = {@Transform(targetName = "After", replacements = {})})
 
                 public  class Before<T, U> {}
                 """,
@@ -182,7 +183,7 @@ public class CodeTransformerProcessorTest {
                 import com.kt.template.Transform;
                 
 
-                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                @CodeTransformer(transforms = {@Transform(targetName = "After", replacements = {})})
                 public  class Before<T, U> {}
                 """,
 
@@ -207,7 +208,7 @@ public class CodeTransformerProcessorTest {
                 import com.kt.template.CodeTransformer;
                 import com.kt.template.Transform;
 
-                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                @CodeTransformer(transforms = {@Transform(targetName = "After", replacements = {})})
                 public  class Before<T, U> {}
                 """,
 
@@ -233,7 +234,7 @@ public class CodeTransformerProcessorTest {
                 import com.kt.template.Transform;
                 import java.util.Date;
 
-                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                @CodeTransformer(transforms = {@Transform(targetName = "After", replacements = {})})
                 public  class Before<T, U> {}
                 """,
 
@@ -260,7 +261,7 @@ public class CodeTransformerProcessorTest {
                 import com.kt.template.Transform;
                 import java.util.Date;
 
-                @CodeTransformer(t1 = @Transform(targetName = "After", replacements = {}))
+                @CodeTransformer(transforms = {@Transform(targetName = "After", replacements = {})})
                 public  class Before<T, U> {}
                 """,
 

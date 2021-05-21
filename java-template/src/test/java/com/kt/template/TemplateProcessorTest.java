@@ -98,6 +98,7 @@ public class TemplateProcessorTest {
                 import com.kt.template.Template;
                 import com.kt.template.Instantiation;
                 import com.kt.template.Replace;
+                import com.kt.template.ReplaceType;
                 import com.kt.template.TypeNamePosition;
                 import java.util.Date;
                 
@@ -107,13 +108,13 @@ public class TemplateProcessorTest {
                         @Instantiation(
                             types = { double.class, Date.class },
                             replacements = {
-                                @Replace(from = "\\\\(double\\\\[\\\\]\\\\) new Object", to = "new  double "),
+                                @Replace(from = "(T1[]) new Object", to = "new  double "),
                                 @Replace(from = "= null", to = "= new Date(0)")
                         }),
                         @Instantiation(
                             types = { String.class, Float.class },
                             replacements = {
-                                @Replace(from = "\\\\(String\\\\[\\\\]\\\\) new Object", to = "new String"),
+                                @Replace(from = "(T1[]) new Object", to = "new String"),
                                 @Replace(from = "= null", to = "= Float.NaN")
                             }
                         )
