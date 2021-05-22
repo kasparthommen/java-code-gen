@@ -8,6 +8,7 @@
 
 
 == TL;DR
+=== What is this?
 This library provides the following code-generating annotations:
 
 * The {TEMPLATE}
@@ -15,6 +16,20 @@ This library provides the following code-generating annotations:
   to C++ templates
 * The {CODE_TRANSFORMER}
   annotation can perform arbitrary code transformation using regex string replacements
+
+=== Why should I use it?
+And why not use a generic string template engine such as
+  link:https://www.stringtemplate.org/[StringTemplate],
+  link:https://velocity.apache.org/[Velocity]
+  or
+  link:https://freemarker.apache.org/[FreeMaker] instead? Because with this library
+  *the template is code* rather than some placeholder-sprinkled text
+  file, which means:
+
+  ** Your template can be unit tested
+  ** Your template enjoys IDE syntax highlighting
+  ** Your IDE can refactor, format and lint your template
+
 
 
 == C++ Template Emulation
@@ -81,8 +96,10 @@ class MyListString {
     }
 }
 ----
-Nice! However, the `(String[]) new Object[size]` expression doesn't make much sense.
-Can we do better? Yes, with a custom string replacement, see below.
+Nice, but the annotation processor only operates on a source code level and simply
+replaces occurrences of `T` with `String`. This leads to the nonsensical expression
+`(String[]) new Object[size]` for array allocation. Can we fix this? Yes, with custom
+string replacements, see below.
 
 
 === Custom String Replacements
@@ -132,10 +149,12 @@ class MyListString {
 }
 ----
 
+If simple string replacement won't do the trick you set `@Replace(..., regex=true)` for
+matching regular expressions.
+
 
 === Primitives
-How about adding a primitive version  our list? Easy, just specify the `double` type
-on top:
+How about adding a primitive version our list? Easy, just add a `double` instantiation:
 [source,java]
 ----
 package com.kt.codegen.demo.list4;
@@ -163,7 +182,7 @@ class MyList<T> {
 }
 ----
 
-which produces `MyListString` from above plus the following class:
+This will generate the following class on top of `MyListString` from above:
 [source,java]
 ----
 // generated from com.kt.codegen.demo.list4.MyList
@@ -226,7 +245,8 @@ right tool for the job, then the more generic
 {CODE_TRANSFORMER}
 might do the trick.
 
-Say you have a custom primitive list that you have implemented for `double`:
+Say you are working on a primitive collections library, and you have successfully written
+a `double` list implementation:
 [source,java]
 ----
 package com.kt.codegen.demo.double1;
@@ -242,9 +262,18 @@ public class MyDoubleList {
 }
 ----
 
-Now, instead of copying and pasting this code a handful of times to create equivalent
-implementations for other primitive types (which is both cumbersome and error-prone) you
-can do the following instead:
+Now you have a couple of options to create lists for other primitive types:
+
+. You copy and paste the class a couple of times followed by a search/replace frenzy. This
+  is cumbersome, time-consuming and will eventually lead to implementations drifting
+  apart because you'll forget to apply that fix to the `float` implementation.
+
+. You fire up a generic template engine, convert this nice, working, unit-tested,
+  syntax-highlighted, auto-formatted, error-checked class into a template text
+  file that immediately loses all those nice properties, and you start configuring
+  that template engine.
+
+. Or you annotate your class as follows:
 
 [source,java]
 ----
