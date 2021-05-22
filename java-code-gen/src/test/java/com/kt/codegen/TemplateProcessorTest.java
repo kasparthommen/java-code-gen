@@ -98,11 +98,10 @@ public class TemplateProcessorTest {
                 import com.kt.codegen.Template;
                 import com.kt.codegen.Instantiate;
                 import com.kt.codegen.Replace;
-                import com.kt.codegen.TypeNamePosition;
                 import java.util.Date;
                 
                 @Template(
-                    typeNamePosition = TypeNamePosition.PREPEND,
+                    append = false,
                     value = {
                         @Instantiate(
                             value = { double.class, Date.class },

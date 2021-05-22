@@ -15,7 +15,8 @@ This library provides the following code-generating annotations:
   annotation generates concrete instantiates of generic types analogous
   to C++ templates
 * The {CODE_TRANSFORMER}
-  annotation can perform arbitrary code transformation using regex string replacements
+  annotation can perform arbitrary code transformation using string replacements
+  (plain or regex)
 
 === Why should I use it?
 And why not use a generic string template engine such as
@@ -34,7 +35,7 @@ And why not use a generic string template engine such as
 
 == C++ Template Emulation
 
-=== First Steps
+=== Motivation
 
 Consider the following generic class (which, of course, would require a lot more work
 before it's a reasonable list implementation):
@@ -111,7 +112,7 @@ The following options allow for more flexibility:
      source folder with `relativeSourceDir`.
   ** I you prefer prepending the type to the class rather than the default appending variant
      (i.e., `StringMyList` rather than `MyListString` in the example above) then
-     you can change `typeNamePosition`.
+     you can set `append` to `false`.
 
 * {REPLACE}
 

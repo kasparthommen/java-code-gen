@@ -89,7 +89,7 @@ public class TemplateProcessor extends AbstractProcessor {
                                      .map(FIRST_UPPER)
                                      .collect(joining(""));
 
-            String fullyQualifiedConcreteClassName = template.typeNamePosition() == TypeNamePosition.APPEND
+            String fullyQualifiedConcreteClassName = template.append()
                     ? fullyQualifiedSourceClassName + typeNames
                     : FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName) + "." + typeNames + FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
 
@@ -136,7 +136,6 @@ public class TemplateProcessor extends AbstractProcessor {
         targetCode = removeImport(targetCode, Template.class.getName());
         targetCode = removeImport(targetCode, Instantiate.class.getName());
         targetCode = removeImport(targetCode, Replace.class.getName());
-        targetCode = removeImport(targetCode, TypeNamePosition.class.getName());
 
         targetCode = removeAnnotation(targetCode, Template.class, fullyQualifiedSourceClassName);
 

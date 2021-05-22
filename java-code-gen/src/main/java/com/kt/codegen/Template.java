@@ -26,7 +26,7 @@ public @interface Template {
     String relativeSourceDir() default "../../src/main/java";
 
     /**
-     * Specifies if the concrete type names should be appended ore prepended to the source class name.
+     * Specifies if the concrete type names should be appended (true) or prepended (false) to the source class name.
      */
-    TypeNamePosition typeNamePosition() default TypeNamePosition.APPEND;
+    boolean append() default true;
 }
