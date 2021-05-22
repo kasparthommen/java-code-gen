@@ -24,12 +24,13 @@ And why not use a generic string template engine such as
   link:https://velocity.apache.org/[Velocity]
   or
   link:https://freemarker.apache.org/[FreeMaker] instead? Because with this library
-  *the template is code* rather than some placeholder-sprinkled text
+  *your template is code* rather than some placeholder-sprinkled text
   file, which means:
 
-  ** Your template can be unit tested
-  ** Your template enjoys IDE syntax highlighting
-  ** Your IDE can refactor, format and lint your template
+  ** Your "template" can be unit tested
+  ** Your "template" enjoys IDE syntax highlighting - no engine-specific plugins
+     required!
+  ** Your IDE can refactor, format and lint your "template"
 
 
 
@@ -81,7 +82,7 @@ matching regular expressions.
 
 
 === Primitives
-How about adding a primitive version our list? Easy, just add a `double` instantiation:
+How about adding a primitive version of our list? Simple: just add a `double` instantiation:
 [source,java]
 ----
 include::{SRC_DIR}/list4/MyList.java[]
@@ -113,6 +114,10 @@ The following options allow for more flexibility:
   ** I you prefer prepending the type to the class rather than the default appending variant
      (i.e., `StringMyList` rather than `MyListString` in the example above) then
      you can set `append` to `false`.
+
+* {CODE_TRANSFORMER}
+
+  ** You can also change the `relativeSourceDir`
 
 * {REPLACE}
 

@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 /**
  * A source code generator that generates new classes by performing string replacements
- * (optionally using regular expression) on the source class file contents.
+ * (optionally using regular expressions) on the source class file contents.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
