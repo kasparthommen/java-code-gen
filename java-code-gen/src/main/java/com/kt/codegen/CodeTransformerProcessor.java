@@ -55,7 +55,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
 
         // make sure that transforms arrays are consistent
-        Transform[] transforms = transformer.transforms();
+        Transform[] transforms = transformer.value();
         if (transforms.length == 0) {
             throw new CodeGenerationException("No transforms supplied");
         }
@@ -63,7 +63,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
         // generate target files
         String pkg = FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName);
         for (Transform transform : transforms) {
-            String fullyQualifiedTargetClassName = pkg + "." + transform.targetName();
+            String fullyQualifiedTargetClassName = pkg + "." + transform.target();
             if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
                 throw new CodeGenerationException(
                         "Target class name must be different from source class name, but was " + fullyQualifiedTargetClassName);
@@ -73,7 +73,7 @@ public class CodeTransformerProcessor extends AbstractProcessor {
                     fullyQualifiedSourceClassName,
                     fullyQualifiedTargetClassName,
                     sourceCode,
-                    transform.replacements());
+                    transform.replace());
 
             writeFile(targetCode, fullyQualifiedTargetClassName, processingEnv);
         }

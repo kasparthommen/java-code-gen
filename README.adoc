@@ -1,16 +1,24 @@
 = Java Code Generator Annotations
 
+:TEMPLATE:         pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`@Template`]]
+:CODE_TRANSFORMER: pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`@CodeTransformer`]]
+:REPLACE:          pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
+:SRC_DIR:          ../../java-code-gen-demo/src/main/java/com/kt/codegen/demo
+:GEN_DIR:          ../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo
+
+
 == TL;DR
 This library provides the following code-generating annotations:
 
-* The link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`+@Template+`]
-  annotation generates concrete instantiations of generic types analogous
+* The {TEMPLATE}
+  annotation generates concrete instantiates of generic types analogous
   to C++ templates
-* The link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`+@CodeTransformer+`]
+* The {CODE_TRANSFORMER}
   annotation can perform arbitrary code transformation using regex string replacements
 
 
 == C++ Template Emulation
+
 === First Steps
 
 Consider the following generic class (which, of course, would require a lot more work
@@ -32,18 +40,16 @@ class MyList<T> {
 }
 ----
 
-You can annotate it with `+@Template+` to e.g. create a concrete String instantiation,
+You can annotate it with {TEMPLATE} to e.g. create a concrete String instantiation,
 analogous to C++ templates:
 [source,java]
 ----
 package com.kt.codegen.demo.list2;
 
-import com.kt.codegen.Instantiation;
+import com.kt.codegen.Instantiate;
 import com.kt.codegen.Template;
 
-@Template(instantiations = {
-    @Instantiation(types = {String.class}),
-})
+@Template(@Instantiate(String.class))
 class MyList<T> {
     private T[] array;
 
@@ -75,7 +81,7 @@ class MyListString {
     }
 }
 ----
-Nice! However, the `+(String[]) new Object[size]+` expression doesn't make much sense.
+Nice! However, the `(String[]) new Object[size]` expression doesn't make much sense.
 Can we do better? Yes, with a custom string replacement, see below.
 
 
@@ -86,18 +92,14 @@ get us all the way, but fret not, there are custom string replacements:
 ----
 package com.kt.codegen.demo.list3;
 
-import com.kt.codegen.Instantiation;
+import com.kt.codegen.Instantiate;
 import com.kt.codegen.Replace;
 import com.kt.codegen.Template;
 
-@Template(instantiations = {
-    @Instantiation(
-        types = {String.class},
-        replacements = {
-            @Replace(from = "(T[]) new Object[size]", to = "new String[size]")
-        }
-    )
-})
+@Template(
+    @Instantiate(value = String.class,
+                 replace = @Replace(from = "(T[]) new Object[size]", to = "new String[size]"))
+)
 class MyList<T> {
     private T[] array;
 
@@ -132,29 +134,21 @@ class MyListString {
 
 
 === Primitives
-How about adding a primitive version  our list? Eays, just specify the `+double+` type
+How about adding a primitive version  our list? Easy, just specify the `double` type
 on top:
 [source,java]
 ----
 package com.kt.codegen.demo.list4;
 
-import com.kt.codegen.Instantiation;
+import com.kt.codegen.Instantiate;
 import com.kt.codegen.Replace;
 import com.kt.codegen.Template;
 
-@Template(instantiations = {
-    @Instantiation(
-        types = {String.class},
-        replacements = {
-            @Replace(from = "(T[]) new Object[size]", to = "new String[size]")
-        }
-    ),
-    @Instantiation(
-        types = {double.class},
-        replacements = {
-            @Replace(from = "(T[]) new Object[size]", to = "new double[size]")
-        }
-    )
+@Template({
+    @Instantiate(value = String.class,
+                 replace = @Replace(from = "(T[]) new Object[size]", to = "new String[size]")),
+    @Instantiate(value = double.class,
+                 replace = @Replace(from = "(T[]) new Object[size]", to = "new double[size]"))
 })
 class MyList<T> {
     private T[] array;
@@ -169,7 +163,7 @@ class MyList<T> {
 }
 ----
 
-which produces `+MyListString+` from above plus the following class:
+which produces `MyListString` from above plus the following class:
 [source,java]
 ----
 // generated from com.kt.codegen.demo.list4.MyList
@@ -196,16 +190,13 @@ the necessary number of concrete types for each instantiation:
 ----
 package com.kt.codegen.demo.map;
 
-import com.kt.codegen.Instantiation;
+import com.kt.codegen.Instantiate;
 import com.kt.codegen.Template;
 
 import java.time.Instant;
 
-@Template(instantiations = {
-    @Instantiation(types = {String.class, Instant.class }),  // <-- two concrete types
-    // ... more instantiations
-})
-class MyMap<K, V> {                                          // <-- two type parameters
+@Template(@Instantiate({String.class, Instant.class }))  // <-- two concrete types
+class MyMap<K, V> {                                      // <-- two type parameters
     // ...
 }
 ----
@@ -214,28 +205,28 @@ class MyMap<K, V> {                                          // <-- two type par
 === Options
 The following options allow for more flexibility:
 
-* link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`+@Template+`]
+* {TEMPLATE}
 
   ** For projects that don't follow the maven directory layout you can specify the relative
-     source folder with `+relativeSourceDir+`.
+     source folder with `relativeSourceDir`.
   ** I you prefer prepending the type to the class rather than the default appending variant
-     (i.e., `+StringMyList+` rather than `+MyListString+` in the example above) then
-     you can change `+typeNamePosition+`.
+     (i.e., `StringMyList` rather than `MyListString` in the example above) then
+     you can change `typeNamePosition`.
 
-* link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`+@Replace+`]
+* {REPLACE}
 
-  ** If normal string replacement won't cut it you can set `+regex+` to
-     `+true+`.
+  ** If normal string replacement won't cut it you can set `regex` to
+     `true`.
 
 
 
 == Code Transformer
 If you want to generate derived versions of a class but template instantiation is not the
 right tool for the job, then the more generic
-link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`+@CodeTransformer+`]
-is for you.
+{CODE_TRANSFORMER}
+might do the trick.
 
-Say you have a custom primitive list that you have implemented for `+double+`:
+Say you have a custom primitive list that you have implemented for `double`:
 [source,java]
 ----
 package com.kt.codegen.demo.double1;
@@ -252,7 +243,8 @@ public class MyDoubleList {
 ----
 
 Now, instead of copying and pasting this code a handful of times to create equivalent
-implementations for other primitive type you can do the following instead:
+implementations for other primitive types (which is both cumbersome and error-prone) you
+can do the following instead:
 
 [source,java]
 ----
@@ -262,13 +254,9 @@ import com.kt.codegen.CodeTransformer;
 import com.kt.codegen.Replace;
 import com.kt.codegen.Transform;
 
-@CodeTransformer(transforms = {
-    @Transform(targetName = "MyFloatList", replacements = {
-        @Replace(from = "\\bdouble\\b", to = "float", regex = true)
-    }),
-    @Transform(targetName = "MyLongList", replacements = {
-        @Replace(from = "\\bdouble\\b", to = "long", regex = true)
-    })
+@CodeTransformer({
+    @Transform(target = "MyFloatList", replace = @Replace(from = "\\bdouble\\b", to = "float", regex = true)),
+    @Transform(target = "MyLongList", replace = @Replace(from = "\\bdouble\\b", to = "long", regex = true))
 })
 public class MyDoubleList {
     private double[] array;

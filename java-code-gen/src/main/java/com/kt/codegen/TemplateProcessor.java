@@ -68,14 +68,14 @@ public class TemplateProcessor extends AbstractProcessor {
 
         // read desired concrete types and make sure they are consistent
         List<? extends TypeParameterElement> typeParameters = sourceClass.getTypeParameters();
-        Instantiation[] instantiations = template.instantiations();
+        Instantiate[] instantiations = template.value();
         if (instantiations.length == 0) {
             throw new CodeGenerationException("Must provide at least one concrete type in types1");
         }
 
         // generate concrete template instantiation source files
         String[] typeParameterNames = typeParameters.stream().map(Object::toString).toArray(String[]::new);
-        for (Instantiation instantiation : instantiations) {
+        for (Instantiate instantiation : instantiations) {
             TypeMirror[] concreteTypes = getTypes(instantiation, messager);
             String[] concreteTypeNames = Stream.of(concreteTypes)
                                                .map(TypeMirror::toString)
@@ -99,17 +99,17 @@ public class TemplateProcessor extends AbstractProcessor {
                     sourceCode,
                     typeParameterNames,
                     concreteTypeNames,
-                    instantiation.replacements());
+                    instantiation.replace());
 
             writeFile(targetCode, fullyQualifiedConcreteClassName, processingEnv);
         }
     }
 
-    private static  TypeMirror[] getTypes(Instantiation instantiation, Messager messager) {
+    private static  TypeMirror[] getTypes(Instantiate instantiations, Messager messager) {
         // uses this trick:
         // https://stackoverflow.com/questions/7687829/java-6-annotation-processing-getting-a-class-from-an-annotation/52793839#52793839
         try {
-            instantiation.types();
+            instantiations.value();
         } catch (MirroredTypesException mtex) {
             List<? extends TypeMirror> typeMirrors = mtex.getTypeMirrors();
             return typeMirrors.isEmpty() ? null : typeMirrors.toArray(TypeMirror[]::new);
@@ -134,7 +134,7 @@ public class TemplateProcessor extends AbstractProcessor {
         targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
         targetCode = removeImport(targetCode, Template.class.getName());
-        targetCode = removeImport(targetCode, Instantiation.class.getName());
+        targetCode = removeImport(targetCode, Instantiate.class.getName());
         targetCode = removeImport(targetCode, Replace.class.getName());
         targetCode = removeImport(targetCode, TypeNamePosition.class.getName());
 

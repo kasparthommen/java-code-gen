@@ -16,12 +16,12 @@ public class TemplateProcessorTest {
                 package x.y;
                             
                 import com.kt.codegen.Template;
-                import com.kt.codegen.Instantiation;
+                import com.kt.codegen.Instantiate;
                 import java.util.Date;
                 import java.util.List;
                 
                 @
-                 Template  ( instantiations = @Instantiation(types = {Date.class}))
+                 Template  ( @Instantiate({Date.class}))
                 public class Klass<T
                                      extends
                                       Number>   {
@@ -55,10 +55,10 @@ public class TemplateProcessorTest {
         String source = """
                 package x.y;
                 import com.kt.codegen.Template;
-                import com.kt.codegen.Instantiation;
+                import com.kt.codegen.Instantiate;
                 
-                @Template(instantiations = {
-                        @Instantiation(types = { int.class })
+                @Template({
+                        @Instantiate({ int.class })
                 })
                 public interface PrimitiveSequence<T> {
                     default T get(int index) {
@@ -87,7 +87,7 @@ public class TemplateProcessorTest {
 
     @Test
     public void twoTypeArgsWithReplacement() throws Exception {
-        String[] replacements = {
+        String[] replace = {
                 "double", "(T1[]) new Object", "new  double ",
                 "some.pkg.Bar", "new T2()", "Bar.create()",
         };
@@ -96,23 +96,23 @@ public class TemplateProcessorTest {
                 package x.y;
                             
                 import com.kt.codegen.Template;
-                import com.kt.codegen.Instantiation;
+                import com.kt.codegen.Instantiate;
                 import com.kt.codegen.Replace;
                 import com.kt.codegen.TypeNamePosition;
                 import java.util.Date;
                 
                 @Template(
                     typeNamePosition = TypeNamePosition.PREPEND,
-                    instantiations = {
-                        @Instantiation(
-                            types = { double.class, Date.class },
-                            replacements = {
+                    value = {
+                        @Instantiate(
+                            value = { double.class, Date.class },
+                            replace = {
                                 @Replace(from = "(T1[]) new Object", to = "new  double "),
                                 @Replace(from = "= null", to = "= new Date(0)")
                         }),
-                        @Instantiation(
-                            types = { String.class, Float.class },
-                            replacements = {
+                        @Instantiate(
+                            value = { String.class, Float.class },
+                            replace = {
                                 @Replace(from = "(T1[]) new Object", to = "new String"),
                                 @Replace(from = "= null", to = "= Float.NaN")
                             }

@@ -1,11 +1,9 @@
 package com.kt.codegen.demo.list2;
 
-import com.kt.codegen.Instantiation;
+import com.kt.codegen.Instantiate;
 import com.kt.codegen.Template;
 
-@Template(instantiations = {
-    @Instantiation(types = {String.class}),
-})
+@Template(@Instantiate(String.class))
 class MyList<T> {
     private T[] array;
 

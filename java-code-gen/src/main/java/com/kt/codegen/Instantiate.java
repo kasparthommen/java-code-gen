@@ -12,12 +12,12 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.SOURCE)
-public @interface Instantiation {
+public @interface Instantiate {
     /**
      * The concrete types to replace the type parameters with. The number of concrete types must match
      * the number of type arguments.
      */
-    Class<?>[] types();
+    Class<?>[] value();
 
     /**
      * An optional list of regex string replacements to apply on top of the generic type replacements.
@@ -27,5 +27,5 @@ public @interface Instantiation {
      *
      * {@code @Replace(from = "\\(T1\\[\\]\\) new Object\\[", to = "new double\\[" }
      */
-    Replace[] replacements() default {};
+    Replace[] replace() default {};
 }

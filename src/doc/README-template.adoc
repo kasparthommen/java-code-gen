@@ -1,38 +1,46 @@
 = Java Code Generator Annotations
 
+:TEMPLATE:         pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`@Template`]]
+:CODE_TRANSFORMER: pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`@CodeTransformer`]]
+:REPLACE:          pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
+:SRC_DIR:          ../../java-code-gen-demo/src/main/java/com/kt/codegen/demo
+:GEN_DIR:          ../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo
+
+
 == TL;DR
 This library provides the following code-generating annotations:
 
-* The link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`+@Template+`]
-  annotation generates concrete instantiations of generic types analogous
+* The {TEMPLATE}
+  annotation generates concrete instantiates of generic types analogous
   to C++ templates
-* The link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`+@CodeTransformer+`]
+* The {CODE_TRANSFORMER}
   annotation can perform arbitrary code transformation using regex string replacements
 
 
 == C++ Template Emulation
+
 === First Steps
 
 Consider the following generic class (which, of course, would require a lot more work
 before it's a reasonable list implementation):
 [source,java]
 ----
-include::../../java-code-gen-demo/src/main/java/com/kt/codegen/demo/list1/MyList.java[]
+include::{SRC_DIR}/list1/MyList.java[]
 ----
 
-You can annotate it with `+@Template+` to e.g. create a concrete String instantiation,
+You can annotate it with {TEMPLATE} to e.g. create a concrete String instantiation,
 analogous to C++ templates:
 [source,java]
 ----
-include::../../java-code-gen-demo/src/main/java/com/kt/codegen/demo/list2/MyList.java[]
+include::{SRC_DIR}/list2/MyList.java[]
 ----
 
 This will generate the following class:
 [source,java]
 ----
-include::../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo/list2/MyListString.java[]
+include::{GEN_DIR}/list2/MyListString.java[]
 ----
-Nice! However, the `+(String[]) new Object[size]+` expression doesn't make much sense.
+Nice! However, the `(String[]) new Object[size]` expression doesn't make much sense.
 Can we do better? Yes, with a custom string replacement, see below.
 
 
@@ -41,28 +49,28 @@ Simply replacing a generic type with a concrete type like we just did doesn't us
 get us all the way, but fret not, there are custom string replacements:
 [source,java]
 ----
-include::../../java-code-gen-demo/src/main/java/com/kt/codegen/demo/list3/MyList.java[]
+include::{SRC_DIR}/list3/MyList.java[]
 ----
 
 And our list compiles:
 [source,java]
 ----
-include::../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo/list3/MyListString.java[]
+include::{GEN_DIR}/list3/MyListString.java[]
 ----
 
 
 === Primitives
-How about adding a primitive version  our list? Eays, just specify the `+double+` type
+How about adding a primitive version  our list? Easy, just specify the `double` type
 on top:
 [source,java]
 ----
-include::../../java-code-gen-demo/src/main/java/com/kt/codegen/demo/list4/MyList.java[]
+include::{SRC_DIR}/list4/MyList.java[]
 ----
 
-which produces `+MyListString+` from above plus the following class:
+which produces `MyListString` from above plus the following class:
 [source,java]
 ----
-include::../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo/list4/MyListDouble.java[]
+include::{GEN_DIR}/list4/MyListDouble.java[]
 ----
 
 
@@ -71,57 +79,58 @@ If your generic class has more than one type parameter then you'll simply have t
 the necessary number of concrete types for each instantiation:
 [source,java]
 ----
-include::../../java-code-gen-demo/src/main/java/com/kt/codegen/demo/map/MyMap.java[]
+include::{SRC_DIR}/map/MyMap.java[]
 ----
 
 
 === Options
 The following options allow for more flexibility:
 
-* link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`+@Template+`]
+* {TEMPLATE}
 
   ** For projects that don't follow the maven directory layout you can specify the relative
-     source folder with `+relativeSourceDir+`.
+     source folder with `relativeSourceDir`.
   ** I you prefer prepending the type to the class rather than the default appending variant
-     (i.e., `+StringMyList+` rather than `+MyListString+` in the example above) then
-     you can change `+typeNamePosition+`.
+     (i.e., `StringMyList` rather than `MyListString` in the example above) then
+     you can change `typeNamePosition`.
 
-* link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`+@Replace+`]
+* {REPLACE}
 
-  ** If normal string replacement won't cut it you can set `+regex+` to
-     `+true+`.
+  ** If normal string replacement won't cut it you can set `regex` to
+     `true`.
 
 
 
 == Code Transformer
 If you want to generate derived versions of a class but template instantiation is not the
 right tool for the job, then the more generic
-link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`+@CodeTransformer+`]
-is for you.
+{CODE_TRANSFORMER}
+might do the trick.
 
-Say you have a custom primitive list that you have implemented for `+double+`:
+Say you have a custom primitive list that you have implemented for `double`:
 [source,java]
 ----
-include::../../java-code-gen-demo/src/main/java/com/kt/codegen/demo/double1/MyDoubleList.java[]
+include::{SRC_DIR}/double1/MyDoubleList.java[]
 ----
 
 Now, instead of copying and pasting this code a handful of times to create equivalent
-implementations for other primitive type you can do the following instead:
+implementations for other primitive types (which is both cumbersome and error-prone) you
+can do the following instead:
 
 [source,java]
 ----
-include::../../java-code-gen-demo/src/main/java/com/kt/codegen/demo/double2/MyDoubleList.java[]
+include::{SRC_DIR}/double2/MyDoubleList.java[]
 ----
 
 This will generate two classes:
 [source,java]
 ----
-include::../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo/double2/MyFloatList.java[]
+include::{GEN_DIR}/double2/MyFloatList.java[]
 ----
 
 And:
 
 [source,java]
 ----
-include::../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo/double2/MyLongList.java[]
+include::{GEN_DIR}/double2/MyLongList.java[]
 ----

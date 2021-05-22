@@ -14,6 +14,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Template {
     /**
+     * The list of desired concrete class instantiations.
+     */
+    Instantiate[] value();
+
+    /**
      * The source directory relative to the classpath where <code>.class</code> files are residing. Defaults
      * to Maven's <code>../../src/main/java</code>, i.e., up two levels from <code>target/classes/</code>
      * and then down to <code>src/main/java</code>
@@ -24,9 +29,4 @@ public @interface Template {
      * Specifies if the concrete type names should be appended ore prepended to the source class name.
      */
     TypeNamePosition typeNamePosition() default TypeNamePosition.APPEND;
-
-    /**
-     * The list of desired concrete class instantiations.
-     */
-    Instantiation[] instantiations();
 }
