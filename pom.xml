@@ -7,14 +7,49 @@
 
     <groupId>com.kt</groupId>
     <artifactId>java-code-gen-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Annotation-based Java code generation</description>
+    <url>https://github.com/kasparthommen/java-code-gen</url>
+
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
 
     <modules>
         <module>java-code-gen</module>
         <module>java-code-gen-demo</module>
     </modules>
+
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+
+    <developers>
+        <developer>
+            <id>kasparthommen</id>
+            <name>Kaspar Thommen</name>
+            <email>kaspar.thommen@gmail.com</email>
+            <url>http://kasparthommen.github.io/</url>
+        </developer>
+    </developers>
+
+
+    <scm>
+        <connection>scm:git:https://github.com/kasparthommen/java-code-gen.git</connection>
+        <developerConnection>scm:git:https://github.com/kasparthommen/java-code-gen.git</developerConnection>
+        <url>https://github.com/kasparthommen/java-code-gen</url>
+    </scm>
 
 
     <build>
@@ -25,7 +60,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <release>16</release>
+                    <release>15</release>
                 </configuration>
             </plugin>
 
@@ -33,6 +68,7 @@
             <plugin>
                 <groupId>io.whelk.asciidoc</groupId>
                 <artifactId>asciidoc-template-maven-plugin</artifactId>
+                <version>1.0.17</version>
                 <configuration>
                     <templateDirectory>src/doc</templateDirectory>
                     <templateFile>README-template.adoc</templateFile>
@@ -41,7 +77,8 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <phase>package</phase>  <!-- after compile to make sure all generated code is there -->
+                        <!-- after compile phase to make sure all generated code is there for inclusion -->
+                        <phase>package</phase>
                         <goals>
                             <goal>build</goal>
                         </goals>

@@ -15,12 +15,21 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Transform {
     /**
-     * The simple (i.e., non-fully qualified and thus package-free) target class name to generate.
+     * The simple (i.e., package-stripped) target class name to generate.
+     *
+     * @return The simple (i.e., package-stripped) target class name to generate.
      */
     String target();
 
     /**
-     * An array of regular expression string replacements to apply to the source class.
+     * An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.
+     * This can be useful to e.g. replace generic array construction of generic type {@code T1} with
+     * primitive array construction:
+     * <br><br>
+     *
+     * {@code @Replace(from = "(T1[]) new Object[", to = "new double[" }
+     *
+     * @return An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.
      */
     Replace[] replace();
 }

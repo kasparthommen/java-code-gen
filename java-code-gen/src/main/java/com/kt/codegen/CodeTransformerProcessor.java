@@ -27,6 +27,9 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 
+/**
+ * The annotation processor for {@link CodeTransformer} annotations.
+ */
 @SupportedAnnotationTypes("com.kt.codegen.CodeTransformer")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class)

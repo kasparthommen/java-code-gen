@@ -15,9 +15,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface CodeTransformer {
     /**
-     * A list of code transformation specifications.
+     * The list of code transformation specifications.
      *
-     * @return
+     * @return The list of code transformation specifications.
      */
     Transform[] value();
 
@@ -25,6 +25,8 @@ public @interface CodeTransformer {
      * The source directory relative to the classpath where <code>.class</code> files are residing. Defaults
      * to Maven's <code>../../src/main/java</code>, i.e., up two levels from <code>target/classes/</code>
      * and then down to <code>src/main/java</code>
+     *
+     * @return The source directory relative to the classpath where <code>.class</code> files are residing.
      */
     String relativeSourceDir() default "../../src/main/java";
 }

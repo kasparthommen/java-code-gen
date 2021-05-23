@@ -38,6 +38,9 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 
+/**
+ * The annotation processor for {@link Template} annotations.
+ */
 @SupportedAnnotationTypes("com.kt.codegen.Template")
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class)

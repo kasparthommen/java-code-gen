@@ -15,6 +15,8 @@ import java.lang.annotation.Target;
 public @interface Template {
     /**
      * The list of desired concrete class instantiations.
+     *
+     * @return The list of desired concrete class instantiations.
      */
     Instantiate[] value();
 
@@ -22,11 +24,15 @@ public @interface Template {
      * The source directory relative to the classpath where <code>.class</code> files are residing. Defaults
      * to Maven's <code>../../src/main/java</code>, i.e., up two levels from <code>target/classes/</code>
      * and then down to <code>src/main/java</code>
+     *
+     * @return The source directory relative to the classpath where <code>.class</code> files are residing.
      */
     String relativeSourceDir() default "../../src/main/java";
 
     /**
      * Specifies if the concrete type names should be appended (true) or prepended (false) to the source class name.
+     *
+     * @return Specifies if the concrete type names should be appended (true) or prepended (false) to the source class name.
      */
     boolean append() default true;
 }

@@ -16,16 +16,20 @@ public @interface Instantiate {
     /**
      * The concrete types to replace the type parameters with. The number of concrete types must match
      * the number of type arguments.
+     *
+     * @return The concrete types to replace the type parameters with.
      */
     Class<?>[] value();
 
     /**
-     * An optional list of regex string replacements to apply on top of the generic type replacements.
+     * An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.
      * This can be useful to e.g. replace generic array construction of generic type {@code T1} with
      * primitive array construction:
-     * <p/>
+     * <br><br>
      *
-     * {@code @Replace(from = "\\(T1\\[\\]\\) new Object\\[", to = "new double\\[" }
+     * {@code @Replace(from = "(T1[]) new Object[", to = "new double[" }
+     *
+     * @return An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.
      */
     Replace[] replace() default {};
 }

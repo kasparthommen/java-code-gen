@@ -15,17 +15,22 @@ import java.lang.annotation.Target;
 public @interface Replace {
     /**
      * The regular expression to replace.
+     *
+     * @return The regular expression to replace.
      */
     String from();
 
     /**
      * The string to replace it with.
+     *
+     * @return The string to replace it with.
      */
     String to();
 
     /**
-     * Specifies if the string replacements should be plain (true) or using
-     * regular expressions (true).
+     * Specifies if the string replacements should be plain (false) or using regular expressions (true).
+     *
+     * @return Specifies if the string replacements should be plain (false) or using regular expressions (true).
      */
     boolean regex() default false;
 }
