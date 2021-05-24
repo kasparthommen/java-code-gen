@@ -12,25 +12,31 @@
 This library provides the following code-generating annotations:
 
 * The {TEMPLATE}
-  annotation generates concrete instantiates of generic types analogous
+  annotation generates concrete instantiations of generic types analogous
   to C++ templates
 * The {CODE_TRANSFORMER}
   annotation can perform arbitrary code transformation using string replacements
   (plain or regex)
 
 === Why should I use it?
-And why not use a generic string template engine such as
-  link:https://www.stringtemplate.org/[StringTemplate],
-  link:https://velocity.apache.org/[Velocity]
-  or
-  link:https://freemarker.apache.org/[FreeMaker] instead? Because with this library
-  *your template is code* rather than some placeholder-sprinkled text
-  file, which means:
+You may ask yourself: why not use a generic string template engine such as
+link:https://www.stringtemplate.org/[StringTemplate],
+link:https://velocity.apache.org/[Velocity]
+or
+link:https://freemarker.apache.org/[FreeMaker] instead? Because of one
+fundamental advantage of this library:
 
-  ** Your "template" can be unit tested
-  ** Your "template" enjoys IDE syntax highlighting - no engine-specific plugins
-     required!
-  ** Your IDE can refactor, format and lint your "template"
+*Your template is actual code*.
+
+Instead
+of having to write a placeholder-sprinkled, engine-specific template file
+your "template" is actual Java code, which means:
+
+  ** The "template" is running code
+  ** The "template" can be unit tested
+  ** The "template" enjoys IDE syntax highlighting - no template
+     engine-specific plugins required
+  ** The "template" can be auto-formatted, linted and refactored by your IDE
 
 
 
