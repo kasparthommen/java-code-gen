@@ -1,20 +1,20 @@
 = Java Code Generator Annotations
 
-:TEMPLATE:         pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Template.java[`@Template`]]
-:CODE_TRANSFORMER: pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/CodeTransformer.java[`@CodeTransformer`]]
-:REPLACE:          pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
-:SRC_DIR:          ../../java-code-gen-demo/src/main/java/com/kt/codegen/demo
-:GEN_DIR:          ../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo
+:INSTANTIATE: pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
+:TRANSFORM:   pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Transform.java[`@Transform`]]
+:REPLACE:     pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
+:SRC_DIR:     ../../java-code-gen-demo/src/main/java/com/kt/codegen/demo
+:GEN_DIR:     ../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo
 
 
 == TL;DR
 === What is this?
 This library provides the following code-generating annotations:
 
-* The {TEMPLATE}
+* The {INSTANTIATE}
   annotation generates concrete instantiations of generic types analogous
   to C++ templates
-* The {CODE_TRANSFORMER}
+* The {TRANSFORM}
   annotation can perform arbitrary code transformation using string replacements
   (plain or regex)
 
@@ -50,7 +50,7 @@ before it's a reasonable list implementation):
 include::{SRC_DIR}/list1/MyList.java[]
 ----
 
-You can annotate it with {TEMPLATE} to e.g. create a concrete String instantiation,
+You can annotate it with {INSTANTIATE} to e.g. create a concrete String instantiation,
 analogous to C++ templates:
 [source,java]
 ----
@@ -113,7 +113,7 @@ include::{SRC_DIR}/map/MyMap.java[]
 === Options
 The following options allow for more flexibility:
 
-* {TEMPLATE}
+* {INSTANTIATE}
 
   ** For projects that don't follow the maven directory layout you can specify the relative
      source folder with `relativeSourceDir`.
@@ -121,7 +121,7 @@ The following options allow for more flexibility:
      (i.e., `StringMyList` rather than `MyListString` in the example above) then
      you can set `append` to `false`.
 
-* {CODE_TRANSFORMER}
+* {TRANSFORM}
 
   ** You can also change the `relativeSourceDir`
 
@@ -135,7 +135,7 @@ The following options allow for more flexibility:
 == Code Transformer
 If you want to generate derived versions of a class but template instantiation is not the
 right tool for the job, then the more generic
-{CODE_TRANSFORMER}
+{TRANSFORM}
 might do the trick.
 
 Say you are working on a primitive collections library, and you have successfully written

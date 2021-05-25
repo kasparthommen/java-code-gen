@@ -1,13 +1,10 @@
 package com.kt.codegen.demo.double2;
 
-import com.kt.codegen.CodeTransformer;
 import com.kt.codegen.Replace;
 import com.kt.codegen.Transform;
 
-@CodeTransformer({
-    @Transform(target = "MyFloatList", replace = @Replace(from = "\\bdouble\\b", to = "float", regex = true)),
-    @Transform(target = "MyLongList", replace = @Replace(from = "\\bdouble\\b", to = "long", regex = true))
-})
+@Transform(target = "MyFloatList", replace = @Replace(from = "\\bdouble\\b", to = "float", regex = true))
+@Transform(target = "MyLongList", replace = @Replace(from = "\\bdouble\\b", to = "long", regex = true))
 public class MyDoubleList {
     private double[] array;
 

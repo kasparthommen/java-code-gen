@@ -21,14 +21,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.kt.codegen.CodeGenerationHelper.FIRST_UPPER;
-import static com.kt.codegen.CodeGenerationHelper.FQ_TO_CLASS;
-import static com.kt.codegen.CodeGenerationHelper.FQ_TO_PACKAGE;
 import static com.kt.codegen.CodeGenerationHelper.findSourceDirectory;
 import static com.kt.codegen.CodeGenerationHelper.readSourceCode;
-import static com.kt.codegen.CodeGenerationHelper.removeAnnotation;
+import static com.kt.codegen.CodeGenerationHelper.removeAnnotations;
 import static com.kt.codegen.CodeGenerationHelper.removeImport;
 import static com.kt.codegen.CodeGenerationHelper.replace;
 import static com.kt.codegen.CodeGenerationHelper.writeFile;
@@ -38,131 +36,157 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 
 /**
- * The annotation processor for {@link CodeTransformer} and {@link Template} annotations.
+ * The annotation processor for {@link Transform} and {@link Instantiate} annotations.
  */
-@SupportedAnnotationTypes({"com.kt.codegen.CodeTransformer", "com.kt.codegen.Template"})
+@SupportedAnnotationTypes({
+        "com.kt.codegen.Transforms",
+        "com.kt.codegen.Transform",
+        "com.kt.codegen.Instantiations",
+        "com.kt.codegen.Instantiate"
+})
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @AutoService(Processor.class)
 public class CodeGeneratorProcessor extends AbstractProcessor {
+    static final String DEFAULT_RELATIVE_SRC_DIR = "../../src/main/java";
+
+    private static final Function<String, String> FQ_TO_CLASS = s -> s.substring(s.lastIndexOf('.') + 1);
+    private static final Function<String, String> FQ_TO_PACKAGE = s -> s.substring(0, s.lastIndexOf('.'));
+    private static final Function<String, String> FIRST_UPPER = s -> s.substring(0, 1).toUpperCase() + s.substring(1);
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Messager messager = processingEnv.getMessager();
-        for (Element element : roundEnv.getElementsAnnotatedWith(CodeTransformer.class)) {
-            try {
-                processCodeTransformer((TypeElement) element, messager);
-            } catch (CodeGeneratorException ex) {
-                messager.printMessage(ERROR, ex.getMessage());
+        try {
+            for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Transforms.class, Transform.class))) {
+                processTransform((TypeElement) element, messager);
             }
-        }
-
-        for (Element element : roundEnv.getElementsAnnotatedWith(Template.class)) {
-            try {
-                processTemplate((TypeElement) element, messager);
-            } catch (CodeGeneratorException ex) {
-                messager.printMessage(ERROR, ex.getMessage());
+            for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Instantiations.class, Instantiate.class))) {
+                processInstantiations((TypeElement) element, messager);
             }
+        } catch (CodeGeneratorException ex) {
+            messager.printMessage(ERROR, ex.getMessage());
         }
 
         return true;
     }
 
-    private void processCodeTransformer(TypeElement sourceClass, Messager messager) {
+    private void processTransform(TypeElement sourceClass, Messager messager) {
         messager.printMessage(NOTE, "Creating code transform for " + sourceClass.getQualifiedName());
-        CodeTransformer codeTransformer = sourceClass.getAnnotation(CodeTransformer.class);
-        Transform[] transforms = codeTransformer.value();
+        Transforms transforms = sourceClass.getAnnotation(Transforms.class);
+        if (transforms != null) {
+            for (Transform transform : transforms.value()) {
+                processTransform(sourceClass, transform, messager);
+            }
+        }
+        Transform transform = sourceClass.getAnnotation(Transform.class);
+        if (transform != null) {
+            processTransform(sourceClass, transform, messager);
+        }
+    }
+
+    private void processTransform(TypeElement sourceClass, Transform transform, Messager messager) {
         process(
                 sourceClass,
-                codeTransformer.relativeSourceDir(),
-                CodeTransformer.class,
-                transforms,
+                getSourceDirectory(sourceClass),
+                new Class[] { Transform.class, Transforms.class, SourceDirectory.class },
+                transform,
                 messager);
     }
 
-    private void processTemplate(TypeElement sourceClass, Messager messager) {
+    private void processInstantiations(TypeElement sourceClass, Messager messager) {
         messager.printMessage(NOTE, "Creating instantiations for generic class " + sourceClass.getQualifiedName());
-        Template template = sourceClass.getAnnotation(Template.class);
+        Instantiations instantiations = sourceClass.getAnnotation(Instantiations.class);
+        if (instantiations != null) {
+            for (Instantiate instantiation : instantiations.value()) {
+                processInstantiation(sourceClass, instantiation, messager);
+            }
+        }
+        Instantiate instantiation = sourceClass.getAnnotation(Instantiate.class);
+        if (instantiation != null) {
+            processInstantiation(sourceClass, instantiation, messager);
+        }
+    }
+
+    private void processInstantiation(TypeElement sourceClass, Instantiate instantiation, Messager messager) {
         String sourceClassName = sourceClass.getSimpleName().toString();
         TypeParameterElement[] typeParameters = sourceClass.getTypeParameters().toArray(TypeParameterElement[]::new);
         String[] typeParameterNames = Arrays.stream(typeParameters).map(Object::toString).toArray(String[]::new);
 
-        Transform[] transforms = Arrays.stream(template.value()).map(instantiation -> {
-            TypeMirror[] concreteTypes = getTypes(instantiation);
-            String[] concreteTypeNames = Stream.of(concreteTypes)
-                                               .map(TypeMirror::toString)
-                                               .map(FQ_TO_CLASS)
-                                               .toArray(String[]::new);
-            if (concreteTypeNames.length != typeParameters.length) {
-                throw new CodeGeneratorException("Expected " + typeParameters.length + " type parameters, got " + Arrays.toString(concreteTypes));
-            }
+        TypeMirror[] concreteTypes = getTypes(instantiation);
+        String[] concreteTypeNames = Stream.of(concreteTypes)
+                                           .map(TypeMirror::toString)
+                                           .map(FQ_TO_CLASS)
+                                           .toArray(String[]::new);
+        if (concreteTypeNames.length != typeParameters.length) {
+            throw new CodeGeneratorException("Expected " + typeParameters.length + " type parameters, got " + Arrays.toString(concreteTypes));
+        }
 
-            messager.printMessage(NOTE, "Instantiating " + sourceClass.getQualifiedName() + " for " + Arrays.toString(concreteTypeNames));
-            String typeNames = Arrays.stream(concreteTypeNames)
-                                     .map(FIRST_UPPER)
-                                     .collect(joining(""));
+        messager.printMessage(NOTE, "Instantiating " + sourceClass.getQualifiedName() + " for " + Arrays.toString(concreteTypeNames));
+        String typeNames = Arrays.stream(concreteTypeNames)
+                                 .map(FIRST_UPPER)
+                                 .collect(joining(""));
 
-            String targetClassName = template.append()
-                    ? sourceClassName + typeNames
-                    : typeNames + sourceClassName;
+        String targetClassName = instantiation.append()
+                ? sourceClassName + typeNames
+                : typeNames + sourceClassName;
 
-            List<Replace> customAndTypeReplaces = new ArrayList<>(Arrays.asList(instantiation.replace()));
-            customAndTypeReplaces.add(new ReplaceImpl(sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s*\\{", targetClassName + " {", true));
-            for (int i = 0; i < typeParameterNames.length; i++) {
-                String from = "\\b" + typeParameterNames[i] + "\\b";
-                String to = concreteTypeNames[i];
-                customAndTypeReplaces.add(new ReplaceImpl(from, to, true));
-            }
+        List<Replace> customAndTypeReplaces = new ArrayList<>(Arrays.asList(instantiation.replace()));
+        customAndTypeReplaces.add(new ReplaceImpl(sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s*\\{", targetClassName + " {", true));
+        for (int i = 0; i < typeParameterNames.length; i++) {
+            String from = "\\b" + typeParameterNames[i] + "\\b";
+            String to = concreteTypeNames[i];
+            customAndTypeReplaces.add(new ReplaceImpl(from, to, true));
+        }
 
-            return new TransformImpl(targetClassName, customAndTypeReplaces.toArray(Replace[]::new));
-        }).toArray(Transform[]::new);
+        TransformImpl transform = new TransformImpl(targetClassName, customAndTypeReplaces.toArray(Replace[]::new));
 
-    process(
-            sourceClass,
-            template.relativeSourceDir(),
-            Template.class,
-            transforms,
-            messager);
+        process(
+                sourceClass,
+                getSourceDirectory(sourceClass),
+                new Class[] { Instantiate.class, Instantiations.class, SourceDirectory.class },
+                transform,
+                messager);
+        }
+
+    private String getSourceDirectory(TypeElement sourceClass) {
+        return sourceClass.getAnnotation(SourceDirectory.class) != null
+                ? sourceClass.getAnnotation(SourceDirectory.class).value()
+                : DEFAULT_RELATIVE_SRC_DIR;
     }
 
     private void process(
             TypeElement sourceClass,
             String relativeSourceDir,
-            Class<? extends Annotation> annotationType,
-            Transform[] transforms,
+            Class<? extends Annotation>[] annotationTypes,
+            Transform transform,
             Messager messager) {
         // read source file
         Path sourceDir = findSourceDirectory(relativeSourceDir, messager);
         String sourceCode = readSourceCode(sourceDir, sourceClass, messager);
         String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
 
-        // make sure that transforms arrays are consistent
-        if (transforms.length == 0) {
-            throw new CodeGeneratorException("No transforms supplied");
-        }
-
         // generate target files
         String pkg = FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName);
-        for (Transform transform : transforms) {
-            String fullyQualifiedTargetClassName = pkg + "." + transform.target();
-            if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
-                throw new CodeGeneratorException(
-                        "Target class name must be different from source class name, but was " + fullyQualifiedTargetClassName);
-            }
-            messager.printMessage(NOTE, "Creating " + fullyQualifiedTargetClassName + " from " + fullyQualifiedSourceClassName);
-            String targetCode = generateTarget(
-                    fullyQualifiedSourceClassName,
-                    fullyQualifiedTargetClassName,
-                    annotationType,
-                    sourceCode,
-                    transform.replace());
-
-            writeFile(targetCode, fullyQualifiedTargetClassName, processingEnv);
+        String fullyQualifiedTargetClassName = pkg + "." + transform.target();
+        if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
+            throw new CodeGeneratorException(
+                    "Target class name must be different from source class name, but was " + fullyQualifiedTargetClassName);
         }
+        messager.printMessage(NOTE, "Creating " + fullyQualifiedTargetClassName + " from " + fullyQualifiedSourceClassName);
+        String targetCode = generateTarget(
+                fullyQualifiedSourceClassName,
+                fullyQualifiedTargetClassName,
+                annotationTypes,
+                sourceCode,
+                transform.replace());
+
+        writeFile(targetCode, fullyQualifiedTargetClassName, processingEnv);
     }
 
     private static String generateTarget(
             String fullyQualifiedSourceClassName,
             String fullyQualifiedTargetClassName,
-            Class<? extends Annotation> annotationType,
+            Class<? extends Annotation>[] annotationTypes,
             String sourceCode,
             Replace[] replacements) {
         String sourceClassName = FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
@@ -172,13 +196,14 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
         targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
-        targetCode = removeImport(targetCode, CodeTransformer.class.getName());
-        targetCode = removeImport(targetCode, Transform.class.getName());
-        targetCode = removeImport(targetCode, Template.class.getName());
-        targetCode = removeImport(targetCode, Instantiate.class.getName());
-        targetCode = removeImport(targetCode, Replace.class.getName());
+        targetCode = removeImport(targetCode, Transforms.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Transform.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Instantiations.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Instantiate.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Replace.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, SourceDirectory.class.getName(), fullyQualifiedSourceClassName);
 
-        targetCode = removeAnnotation(targetCode, annotationType, fullyQualifiedSourceClassName);
+        targetCode = removeAnnotations(targetCode, annotationTypes, fullyQualifiedSourceClassName);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
         targetCode = "// generated from " + fullyQualifiedSourceClassName + "\n" + targetCode;

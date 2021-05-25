@@ -2,16 +2,18 @@ package com.kt.codegen;
 
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 
 /**
- * Specifies a concrete class transformation with a target class name, {@link #target()},
- * and a list of regular expression {@link #replace()} applied to the source file.
+ * Specifies that a new class should be generated off the annotated class. The target class name is specified
+ * by {@link #target()} and string replacements (plain or regex) are specified by {@link #replace()}.
  */
-@Target(ElementType.ANNOTATION_TYPE)
+@Repeatable(Transforms.class)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface Transform {
     /**
@@ -31,5 +33,5 @@ public @interface Transform {
      *
      * @return An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.
      */
-    Replace[] replace();
+    Replace[] replace() default {};
 }

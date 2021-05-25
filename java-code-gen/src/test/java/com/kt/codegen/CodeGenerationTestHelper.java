@@ -16,7 +16,7 @@ import static com.google.testing.compile.Compiler.javac;
 
 
 class CodeGenerationTestHelper {
-    static void checkTransform(
+    static void checkGeneration(
             AbstractProcessor annotationProcessor,
             String sourceClassName,
             String source,

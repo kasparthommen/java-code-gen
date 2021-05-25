@@ -8,10 +8,10 @@ import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,9 +19,11 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 
 class CodeGenerationHelper {
-    static final Function<String, String> FQ_TO_CLASS = s -> s.substring(s.lastIndexOf('.') + 1);
-    static final Function<String, String> FQ_TO_PACKAGE = s -> s.substring(0, s.lastIndexOf('.'));
-    static final Function<String, String> FIRST_UPPER = s -> s.substring(0, 1).toUpperCase() + s.substring(1);
+    enum ReplacementMethod {
+        PLAIN_ALL,
+        REGEX_ALL,
+        REGEX_FIRST
+    }
 
     static Path findSourceDirectory(String relativeSourceDir, Messager messager) {
         Path classFileDir;
@@ -57,25 +59,36 @@ class CodeGenerationHelper {
         }
     }
 
-    static String removeImport(String code, String fullyQualifiedClassName) {
-        return code.replaceAll("[ \\t]*import\\s+" + fullyQualifiedClassName + "\\s*;\\s*\n", "");
+    static String removeImport(String code, String fullyQualifiedClassName, String fullyQualifiedSourceClassName) {
+        return replace(
+                code,
+                "^\\s*import\\s+" + fullyQualifiedClassName + "\\s*;\\s*\n", "\n",
+                ReplacementMethod.REGEX_ALL,
+                false,
+                fullyQualifiedSourceClassName);
     }
 
-    static String removeAnnotation(
+    static String removeAnnotations(
             String code,
-            Class<?> annotationType,
+            Class<? extends Annotation>[] annotationTypes,
             String fullyQualifiedSourceClassName) {
-        String annotationStartRegex = "@\\s*" + annotationType.getSimpleName() + "\\s*\\(";
-        int annotationStartIndex = indexOfRegex(code, annotationStartRegex);
-        if (annotationStartIndex == -1) {
-            throw new CodeGeneratorException("Annotation not found: " + annotationType);
-        }
-
-        code = replace(code, annotationStartRegex, "(", true, fullyQualifiedSourceClassName);
-        code = skipBrackets('(', ')', code, annotationStartIndex);
-        code = code.substring(0, annotationStartIndex) + code.substring(annotationStartIndex);
-        if (code.substring(annotationStartIndex - 2).startsWith("\n\n\n")) {
-            code = code.substring(0, annotationStartIndex) + code.substring(annotationStartIndex + 1);
+        for (var annotationType : annotationTypes) {
+            String annotationStartRegex = "@\\s*" + annotationType.getSimpleName() + "\\s*\\(";
+            while (true) {
+                int annotationStartIndex = indexOfRegex(code, annotationStartRegex);
+                if (annotationStartIndex == -1) {
+                    break;
+                }
+                code = replace(
+                        code,
+                        annotationStartRegex,
+                        "(",
+                        ReplacementMethod.REGEX_FIRST,
+                        true,
+                        fullyQualifiedSourceClassName);
+                code = skipBrackets('(', ')', code, annotationStartIndex);
+                code = code.substring(0, annotationStartIndex).replaceAll("\\s\\s+$", "\n\n") + code.substring(annotationStartIndex).replaceAll("^\\s*", "");
+            }
         }
         return code;
     }
@@ -84,7 +97,8 @@ class CodeGenerationHelper {
         for (Replace replacement : replacements) {
             String from = replacement.from();
             String to = replacement.to();
-            code = replace(code, from, to, replacement.regex(), fullyQualifiedSourceClassName);
+            ReplacementMethod replacementMethod = replacement.regex() ? ReplacementMethod.REGEX_ALL : ReplacementMethod.PLAIN_ALL;
+            code = replace(code, from, to, replacementMethod, true, fullyQualifiedSourceClassName);
         }
         return code;
     }
@@ -93,24 +107,27 @@ class CodeGenerationHelper {
             String code,
             String from,
             String to,
-            boolean regex,
+            ReplacementMethod replacementMethod,
+            boolean enforcePresence,
             String fullyQualifiedSourceClassName) {
-        if (regex) {
+        if (replacementMethod == ReplacementMethod.PLAIN_ALL) {
+            if (code.contains(from)) {
+                return code.replace(from, to);
+            } else if (enforcePresence) {
+                throw new CodeGeneratorException("Search term not found in " + fullyQualifiedSourceClassName + ": " + from);
+            }
+        } else {
             Pattern pattern = Pattern.compile(from, Pattern.MULTILINE | Pattern.DOTALL);
             Matcher matcher = pattern.matcher(code);
             if (matcher.find()) {
-                code = matcher.replaceAll(to);
-            } else {
+                return replacementMethod == ReplacementMethod.REGEX_ALL
+                        ? matcher.replaceAll(to)
+                        : matcher.replaceFirst(to);
+            } else if (enforcePresence) {
                 throw new CodeGeneratorException("Regex search term not found in " + fullyQualifiedSourceClassName + ": " + from);
             }
-            return code;
-        } else {
-            if (code.contains(from)) {
-                return code.replace(from, to);
-            } else {
-                throw new CodeGeneratorException("Search term not found in " + fullyQualifiedSourceClassName + ": " + from);
-            }
         }
+        return code;
     }
 
     static void writeFile(
@@ -128,8 +145,10 @@ class CodeGenerationHelper {
     }
 
     private static String skipBrackets(char opening, char closing, String code, int startIndex) {
-        // there could be some whitespace before the opening bracket
-        assert code.charAt(startIndex) == opening;
+        if (code.charAt(startIndex) != opening) {
+            throw new IllegalStateException("Internal error: opening bracket not where it's expected");
+        }
+
         int bracketCount = 0;
         int endIndex = startIndex;
         boolean inString = false;
@@ -137,8 +156,8 @@ class CodeGenerationHelper {
             if (endIndex >= code.length()) {
                 throw new IllegalStateException("Internal error: Reached end of target code but didn't find end of annotation");
             }
-            char c = code.charAt(endIndex);
 
+            char c = code.charAt(endIndex);
             if (inString) {
                 // handle escapes when walking through strings
                 switch (c) {
