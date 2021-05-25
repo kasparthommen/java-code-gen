@@ -10,18 +10,18 @@ import java.lang.annotation.Target;
 
 /**
  * Specifies that a new class should be generated off the annotated class. The target class name is specified
- * by {@link #target()} and string replacements (plain or regex) are specified by {@link #replace()}.
+ * by {@link #name()} and string replacements (plain or regex) are specified by {@link #replace()}.
  */
-@Repeatable(Transforms.class)
+@Repeatable(Generates.class)
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
-public @interface Transform {
+public @interface Generate {
     /**
      * The simple (i.e., package-stripped) target class name to generate.
      *
      * @return The simple (i.e., package-stripped) target class name to generate.
      */
-    String target();
+    String name();
 
     /**
      * An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.

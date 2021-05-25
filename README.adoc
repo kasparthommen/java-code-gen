@@ -1,35 +1,35 @@
 = Java Code Generator Annotations
 
-:INSTANTIATE: pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
-:TRANSFORM:   pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Transform.java[`@Transform`]]
-:REPLACE:     pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
-:SRC_DIR:     ../../java-code-gen-demo/src/main/java/com/kt/codegen/demo
-:GEN_DIR:     ../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo
-
+:INSTANTIATE:       pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
+:GENERATE:          pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Generate.java[`@Generate`]]
+:REPLACE:           pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
+:SRC_DIR:           ../../java-code-gen-demo/src/main/java/com/kt/codegen/demo
+:GEN_DIR:           ../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo
+:SOURCE_DIRECTORY:  pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/SourceDirectory.java[`@SourceDirectory`]]
 
 == TL;DR
 === What is this?
 This library provides the following code-generating annotations:
 
-* The {INSTANTIATE}
-  annotation generates concrete instantiations of generic types analogous
-  to C++ templates
-* The {TRANSFORM}
-  annotation can perform arbitrary code transformation using string replacements
-  (plain or regex)
+* {INSTANTIATE} generates concrete instantiations of
+generic classes analogous to C++ templates, e.g. `MyListString` from
+`MyList<T>`
+* {GENERATE} generates new classes by performing string or
+  regex replacements on the source code
 
 === Why should I use it?
-You may ask yourself: why not use a generic string template engine such as
+The single biggest advantage of this library over generic string template
+engines such as
 link:https://www.stringtemplate.org/[StringTemplate],
 link:https://velocity.apache.org/[Velocity]
 or
-link:https://freemarker.apache.org/[FreeMaker] instead? Because of one
-fundamental advantage of this library:
+link:https://freemarker.apache.org/[FreeMaker] is:
 
 *Your template is actual code*.
 
-Instead of having to write a placeholder-sprinkled, engine-specific template file
-your "template" is actual Java code, which means:
+Thus, instead of having to write a placeholder-sprinkled, engine-specific
+template file, your "template" is a Java class, which has the following
+benefits:
 
   ** The "template" is running code
   ** The "template" can be unit tested
@@ -38,8 +38,7 @@ your "template" is actual Java code, which means:
   ** The "template" can be auto-formatted, linted and refactored by your IDE
 
 
-
-== C++ Template Emulation
+== Instantiate generic classes with {INSTANTIATE}
 
 === Motivation
 
@@ -102,10 +101,10 @@ class MyListString {
     }
 }
 ----
+
 Nice, but the annotation processor only operates on a source code level and simply
 replaces occurrences of `T` with `String`. This leads to a guaranteed class cast
-exception in the expression
-`(String[]) new Object[size]` for array allocation. Can we fix this? Yes, with custom
+exception in the expression `(String[]) new Object[size]`. Can we fix this? Yes, with custom
 string replacements, see below.
 
 
@@ -185,7 +184,7 @@ class MyList<T> {
 }
 ----
 
-This will generate the following class on top of `MyListString` from above:
+This will additionally generate the following class:
 [source,java]
 ----
 // generated from com.kt.codegen.demo.list4.MyList
@@ -203,6 +202,9 @@ class MyListDouble {
     }
 }
 ----
+
+Note that the class is called `MyListDouble` instead of `MyListdouble` (note the
+different case of the "d") to make the two types  explicit in the class name.
 
 
 === Multiple Type Parameters
@@ -226,35 +228,25 @@ class MyMap<K, V> {                           // <-- two type parameters
 ----
 
 
-=== Options
+== Options
 The following options allow for more flexibility:
 
 * {INSTANTIATE}
-
   ** For projects that don't follow the maven directory layout you can specify the relative
-     source folder with `relativeSourceDir`.
+source directory with {SOURCE_DIRECTORY}.
   ** I you prefer prepending the type to the class rather than the default appending variant
-     (i.e., `StringMyList` rather than `MyListString` in the example above) then
-     you can set `append` to `false`.
+(i.e., `StringMyList` rather than `MyListString` in the example above) then
+you can set `append` to `false`.
 
-* {TRANSFORM}
-
-  ** You can also change the `relativeSourceDir`
-
+* {GENERATE}
+  ** You can also change the relative source directory using {SOURCE_DIRECTORY}.
 * {REPLACE}
-
   ** If normal string replacement won't cut it, you can set `regex` to
-     `true`.
+`true`.
 
 
-
-== Code Transformer
-If you want to generate derived versions of a class but template instantiation is not the
-right tool for the job, then the more generic
-{TRANSFORM}
-might do the trick.
-
-Say you are working on a primitive collections library, and you have successfully written
+== Generate classes using {GENERATE}
+Say you are working on a primitive collection library, and you have successfully written
 a `double` list implementation:
 [source,java]
 ----
@@ -274,25 +266,26 @@ public class MyDoubleList {
 Now you have a couple of options to create lists for other primitive types:
 
 . You copy and paste the class a couple of times followed by a search/replace frenzy. This
-  is cumbersome, time-consuming and will eventually lead to implementations drifting
-  apart because you'll forget to apply that fix to the `float` implementation.
+is cumbersome, time-consuming and will eventually lead to implementations drifting
+apart because you'll forget to apply that one fix to the `float` implementation.
 
 . You fire up a generic template engine, convert this nice, working, unit-tested,
-  syntax-highlighted, auto-formatted, error-checked class into a template text
-  file that immediately loses all those nice properties, and you start configuring
-  that template engine.
+syntax-highlighted, auto-formatted, error-checked class into a template text
+file that immediately loses all those nice properties, and you start configuring
+that template engine.
 
-. Or you annotate your class as follows:
+. You annotate your class as follows:
 
 [source,java]
 ----
 package com.kt.codegen.demo.double2;
 
+import com.kt.codegen.Generate;
 import com.kt.codegen.Replace;
-import com.kt.codegen.Transform;
 
-@Transform(target = "MyFloatList", replace = @Replace(from = "\\bdouble\\b", to = "float", regex = true))
-@Transform(target = "MyLongList", replace = @Replace(from = "\\bdouble\\b", to = "long", regex = true))
+
+@Generate(name = "MyFloatList", replace = @Replace(from = "\\bdouble\\b", to = "float", regex = true))
+@Generate(name = "MyLongList", replace = @Replace(from = "\\bdouble\\b", to = "long", regex = true))
 public class MyDoubleList {
     private double[] array;
 
@@ -338,3 +331,6 @@ public class MyLongList {
     // ...
 }
 ----
+
+Note that you can also specify custom string replacements using
+`@Generate(..., replace = { @Replace(...), ... })`.

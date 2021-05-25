@@ -6,17 +6,17 @@ import org.junit.jupiter.api.Test;
 import static com.kt.codegen.CodeGenerationTestHelper.checkGeneration;
 
 
-public class CodeGeneratorProcessorTransformTest {
+public class CodeGeneratorProcessorGenerateTest {
     @Test
     public void classRename() throws Exception {
         String source = """
                 package x.y;
                 
-                import com.kt.codegen.Transforms;
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generates;
+                import com.kt.codegen.Generate;
                 import com.kt.codegen.Replace;
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
                 public  class Before<T, U> {  // Beforex 1Before Before
                   int q;
                   
@@ -48,11 +48,11 @@ public class CodeGeneratorProcessorTransformTest {
             String source = """
                     package x.y;
                     
-                    import com.kt.codegen.Transform;
+                    import com.kt.codegen.Generate;
                     import com.kt.codegen.SourceDirectory;
                     import com.kt.codegen.Replace;
     
-                         @ Transform ( target    ="After"
+                         @ Generate ( name    ="After"
                          , replace=     {
                         @Replace(from="q", to="p"),
                         @Replace(from = "int",
@@ -61,7 +61,7 @@ public class CodeGeneratorProcessorTransformTest {
                     
                       @ SourceDirectory("../../src/main/java")
                     
-                    @Transform(target="After2")
+                    @Generate(name="After2")
                      
                     public  class Before<T, U> {
                       int int1;  // xx
@@ -113,11 +113,11 @@ public class CodeGeneratorProcessorTransformTest {
                 package x.y;
                 
                   import
-                    com.kt.codegen.Transform
+                    com.kt.codegen.Generate
                      ;
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generate;
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -138,9 +138,9 @@ public class CodeGeneratorProcessorTransformTest {
                 package x.y;
 
                 
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generate;
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
 
                 public  class Before<T, U> {}
                 """,
@@ -161,10 +161,10 @@ public class CodeGeneratorProcessorTransformTest {
                 """
                 package x.y;
 
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generate;
                 
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
 
                 public  class Before<T, U> {}
                 """,
@@ -186,10 +186,10 @@ public class CodeGeneratorProcessorTransformTest {
                 package x.y;
 
 
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generate;
                 
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -210,9 +210,9 @@ public class CodeGeneratorProcessorTransformTest {
                 package x.y;
                 
                 import java.lang.Math;
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generate;
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -234,10 +234,10 @@ public class CodeGeneratorProcessorTransformTest {
                 """
                 package x.y;
                 
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generate;
                 import java.util.Date;
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -260,10 +260,10 @@ public class CodeGeneratorProcessorTransformTest {
                 package x.y;
                 
                 import java.lang.Math;
-                import com.kt.codegen.Transform;
+                import com.kt.codegen.Generate;
                 import java.util.Date;
 
-                @Transform(target = "After", replace = {})
+                @Generate(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 

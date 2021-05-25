@@ -8,10 +8,10 @@ import java.lang.annotation.Target;
 
 
 /**
- * Container annotation for {@link Transform}, see {@link java.lang.annotation.Repeatable},
+ * Container annotation for {@link Generate}, see {@link java.lang.annotation.Repeatable},
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
-public @interface Transforms {
-    Transform[] value();
+public @interface Generates {
+    Generate[] value();
 }

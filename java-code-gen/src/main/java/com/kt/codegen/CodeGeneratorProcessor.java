@@ -36,11 +36,11 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 
 /**
- * The annotation processor for {@link Transform} and {@link Instantiate} annotations.
+ * The annotation processor for {@link Generate} and {@link Instantiate} annotations.
  */
 @SupportedAnnotationTypes({
-        "com.kt.codegen.Transforms",
-        "com.kt.codegen.Transform",
+        "com.kt.codegen.Generates",
+        "com.kt.codegen.Generate",
         "com.kt.codegen.Instantiations",
         "com.kt.codegen.Instantiate"
 })
@@ -57,11 +57,11 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Messager messager = processingEnv.getMessager();
         try {
-            for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Transforms.class, Transform.class))) {
-                processTransform((TypeElement) element, messager);
+            for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Generates.class, Generate.class))) {
+                processGenerate((TypeElement) element, messager);
             }
             for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Instantiations.class, Instantiate.class))) {
-                processInstantiations((TypeElement) element, messager);
+                processInstantiate((TypeElement) element, messager);
             }
         } catch (CodeGeneratorException ex) {
             messager.printMessage(ERROR, ex.getMessage());
@@ -70,44 +70,44 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         return true;
     }
 
-    private void processTransform(TypeElement sourceClass, Messager messager) {
-        messager.printMessage(NOTE, "Creating code transform for " + sourceClass.getQualifiedName());
-        Transforms transforms = sourceClass.getAnnotation(Transforms.class);
-        if (transforms != null) {
-            for (Transform transform : transforms.value()) {
-                processTransform(sourceClass, transform, messager);
+    private void processGenerate(TypeElement sourceClass, Messager messager) {
+        messager.printMessage(NOTE, "Generating code for " + sourceClass.getQualifiedName());
+        Generates generates = sourceClass.getAnnotation(Generates.class);
+        if (generates != null) {
+            for (Generate generate : generates.value()) {
+                processGenerate(sourceClass, generate, messager);
             }
         }
-        Transform transform = sourceClass.getAnnotation(Transform.class);
-        if (transform != null) {
-            processTransform(sourceClass, transform, messager);
+        Generate generate = sourceClass.getAnnotation(Generate.class);
+        if (generate != null) {
+            processGenerate(sourceClass, generate, messager);
         }
     }
 
-    private void processTransform(TypeElement sourceClass, Transform transform, Messager messager) {
+    private void processGenerate(TypeElement sourceClass, Generate generate, Messager messager) {
         process(
                 sourceClass,
                 getSourceDirectory(sourceClass),
-                new Class[] { Transform.class, Transforms.class, SourceDirectory.class },
-                transform,
+                new Class[] { Generate.class, Generates.class, SourceDirectory.class },
+                generate,
                 messager);
     }
 
-    private void processInstantiations(TypeElement sourceClass, Messager messager) {
+    private void processInstantiate(TypeElement sourceClass, Messager messager) {
         messager.printMessage(NOTE, "Creating instantiations for generic class " + sourceClass.getQualifiedName());
         Instantiations instantiations = sourceClass.getAnnotation(Instantiations.class);
         if (instantiations != null) {
             for (Instantiate instantiation : instantiations.value()) {
-                processInstantiation(sourceClass, instantiation, messager);
+                processInstantiate(sourceClass, instantiation, messager);
             }
         }
         Instantiate instantiation = sourceClass.getAnnotation(Instantiate.class);
         if (instantiation != null) {
-            processInstantiation(sourceClass, instantiation, messager);
+            processInstantiate(sourceClass, instantiation, messager);
         }
     }
 
-    private void processInstantiation(TypeElement sourceClass, Instantiate instantiation, Messager messager) {
+    private void processInstantiate(TypeElement sourceClass, Instantiate instantiation, Messager messager) {
         String sourceClassName = sourceClass.getSimpleName().toString();
         TypeParameterElement[] typeParameters = sourceClass.getTypeParameters().toArray(TypeParameterElement[]::new);
         String[] typeParameterNames = Arrays.stream(typeParameters).map(Object::toString).toArray(String[]::new);
@@ -138,13 +138,13 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             customAndTypeReplaces.add(new ReplaceImpl(from, to, true));
         }
 
-        TransformImpl transform = new TransformImpl(targetClassName, customAndTypeReplaces.toArray(Replace[]::new));
+        GenerateImpl generate = new GenerateImpl(targetClassName, customAndTypeReplaces.toArray(Replace[]::new));
 
         process(
                 sourceClass,
                 getSourceDirectory(sourceClass),
                 new Class[] { Instantiate.class, Instantiations.class, SourceDirectory.class },
-                transform,
+                generate,
                 messager);
         }
 
@@ -158,7 +158,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             TypeElement sourceClass,
             String relativeSourceDir,
             Class<? extends Annotation>[] annotationTypes,
-            Transform transform,
+            Generate generate,
             Messager messager) {
         // read source file
         Path sourceDir = findSourceDirectory(relativeSourceDir, messager);
@@ -167,7 +167,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
         // generate target files
         String pkg = FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName);
-        String fullyQualifiedTargetClassName = pkg + "." + transform.target();
+        String fullyQualifiedTargetClassName = pkg + "." + generate.name();
         if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
             throw new CodeGeneratorException(
                     "Target class name must be different from source class name, but was " + fullyQualifiedTargetClassName);
@@ -178,7 +178,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                 fullyQualifiedTargetClassName,
                 annotationTypes,
                 sourceCode,
-                transform.replace());
+                generate.replace());
 
         writeFile(targetCode, fullyQualifiedTargetClassName, processingEnv);
     }
@@ -196,8 +196,8 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
         targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
-        targetCode = removeImport(targetCode, Transforms.class.getName(), fullyQualifiedSourceClassName);
-        targetCode = removeImport(targetCode, Transform.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Generates.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Generate.class.getName(), fullyQualifiedSourceClassName);
         targetCode = removeImport(targetCode, Instantiations.class.getName(), fullyQualifiedSourceClassName);
         targetCode = removeImport(targetCode, Instantiate.class.getName(), fullyQualifiedSourceClassName);
         targetCode = removeImport(targetCode, Replace.class.getName(), fullyQualifiedSourceClassName);
@@ -223,18 +223,18 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         throw new IllegalStateException("Cannot get to here");
     }
 
-    private static class TransformImpl implements Transform {
-        private final String target;
+    private static class GenerateImpl implements Generate {
+        private final String name;
         private final Replace[] replaces;
 
-        private TransformImpl(String target, Replace[] replaces) {
-            this.target = target;
+        private GenerateImpl(String name, Replace[] replaces) {
+            this.name = name;
             this.replaces = replaces;
         }
 
         @Override
-        public String target() {
-            return target;
+        public String name() {
+            return name;
         }
 
         @Override
