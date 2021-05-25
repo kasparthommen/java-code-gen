@@ -155,7 +155,7 @@ class MyListString {
 }
 ----
 
-If simple string replacement won't do the trick you set `@Replace(..., regex=true)` for
+If simple string replacement won't do the trick you set `@Replace(..., regex = true)` for
 matching regular expressions.
 
 

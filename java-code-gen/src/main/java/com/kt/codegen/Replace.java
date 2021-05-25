@@ -8,15 +8,15 @@ import java.lang.annotation.Target;
 
 
 /**
- * Specifies a regular expression string replacement.
+ * Specifies a string replacement (plain or regex).
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface Replace {
     /**
-     * The regular expression to replace.
+     * The plain string or regex expression to replace.
      *
-     * @return The regular expression to replace.
+     * @return The plain string or regex expression to replace.
      */
     String from();
 

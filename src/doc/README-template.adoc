@@ -83,7 +83,7 @@ And our list compiles:
 include::{GEN_DIR}/list3/MyListString.java[]
 ----
 
-If simple string replacement won't do the trick you set `@Replace(..., regex=true)` for
+If simple string replacement won't do the trick you set `@Replace(..., regex = true)` for
 matching regular expressions.
 
 
