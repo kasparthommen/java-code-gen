@@ -18,6 +18,17 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-deploy-plugin.version>3.0.0-M1</maven-deploy-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
+        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+        <maven-failsafe-plugin.version>3.0.0-M5</maven-failsafe-plugin.version>
+        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+        <maven-release-plugin.version>3.0.0-M4</maven-release-plugin.version>
+        <asciidoc-template-maven-plugin.version>1.0.17</asciidoc-template-maven-plugin.version>
+        <compile-testing.version>0.19</compile-testing.version>
+        <junit-jupiter.version>5.7.1</junit-jupiter.version>
     </properties>
 
 
@@ -59,7 +70,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <release>15</release>
                 </configuration>
@@ -69,7 +80,7 @@
             <plugin>
                 <groupId>io.whelk.asciidoc</groupId>
                 <artifactId>asciidoc-template-maven-plugin</artifactId>
-                <version>1.0.17</version>
+                <version>${asciidoc-template-maven-plugin.version}</version>
                 <configuration>
                     <templateDirectory>src/doc</templateDirectory>
                     <templateFile>README-template.adoc</templateFile>
