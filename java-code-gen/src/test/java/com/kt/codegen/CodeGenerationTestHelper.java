@@ -58,7 +58,7 @@ class CodeGenerationTestHelper {
             private void deleteRecursively(Path path) {
                 try {
                     if (Files.isDirectory(path)) {
-                        Files.list(path).forEach(p -> deleteRecursively(p));
+                        Files.list(path).forEach(this::deleteRecursively);
                     }
                     try {
                         Thread.sleep(200);

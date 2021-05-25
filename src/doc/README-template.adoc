@@ -28,8 +28,7 @@ fundamental advantage of this library:
 
 *Your template is actual code*.
 
-Instead
-of having to write a placeholder-sprinkled, engine-specific template file
+Instead of having to write a placeholder-sprinkled, engine-specific template file
 your "template" is actual Java code, which means:
 
   ** The "template" is running code
@@ -64,7 +63,8 @@ This will generate the following class:
 include::{GEN_DIR}/list2/MyListString.java[]
 ----
 Nice, but the annotation processor only operates on a source code level and simply
-replaces occurrences of `T` with `String`. This leads to the nonsensical expression
+replaces occurrences of `T` with `String`. This leads to a guaranteed class cast
+exception in the expression
 `(String[]) new Object[size]` for array allocation. Can we fix this? Yes, with custom
 string replacements, see below.
 
@@ -127,7 +127,7 @@ The following options allow for more flexibility:
 
 * {REPLACE}
 
-  ** If normal string replacement won't cut it you can set `regex` to
+  ** If normal string replacement won't cut it, you can set `regex` to
      `true`.
 
 

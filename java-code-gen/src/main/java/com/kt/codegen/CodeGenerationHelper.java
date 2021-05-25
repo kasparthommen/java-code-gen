@@ -19,33 +19,32 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 
 class CodeGenerationHelper {
-    static final String SOURCE_CLASS_NAME_PLACEHOLDER = "${sourceClassName}";
     static final Function<String, String> FQ_TO_CLASS = s -> s.substring(s.lastIndexOf('.') + 1);
     static final Function<String, String> FQ_TO_PACKAGE = s -> s.substring(0, s.lastIndexOf('.'));
     static final Function<String, String> FIRST_UPPER = s -> s.substring(0, 1).toUpperCase() + s.substring(1);
 
-    static Path findSourceDirectory(String relativeSourceDir, Messager messager) throws CodeGenerationException {
+    static Path findSourceDirectory(String relativeSourceDir, Messager messager) {
         Path classFileDir;
         try {
             classFileDir = Path.of(CodeGenerationHelper.class.getClassLoader().getResource(".").toURI());
         } catch (URISyntaxException ex) {
-            throw new CodeGenerationException(ex.getMessage());
+            throw new CodeGeneratorException(ex.getMessage());
         }
         Path sourceDir = classFileDir.resolve(relativeSourceDir).normalize();
         if (sourceDir == null || !Files.exists(sourceDir)) {
-            throw new CodeGenerationException("Source path not found: " + sourceDir
+            throw new CodeGeneratorException("Source path not found: " + sourceDir
                     + ". Possibly a mis-specification of the relative source directory (" + relativeSourceDir + ")?");
         }
         messager.printMessage(NOTE, "sourceDir=" + sourceDir);
         return sourceDir;
     }
 
-    static String readSourceCode(Path sourceDir, TypeElement sourceClass, Messager messager) throws CodeGenerationException {
+    static String readSourceCode(Path sourceDir, TypeElement sourceClass, Messager messager) {
         String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
         String relativePath = fullyQualifiedSourceClassName.replace(".", File.separator) + ".java";
         Path sourceFile = sourceDir.resolve(relativePath);
         if (!Files.exists(sourceFile)) {
-            throw new CodeGenerationException("Source file not found: " + sourceFile);
+            throw new CodeGeneratorException("Source file not found: " + sourceFile);
         }
         messager.printMessage(NOTE, "sourceFile=" + sourceFile);
 
@@ -54,7 +53,7 @@ class CodeGenerationHelper {
             source = Files.readString(sourceFile).replace("\r", "");
             return source;
         } catch (IOException ex) {
-            throw new CodeGenerationException(toString(ex));
+            throw new CodeGeneratorException(toString(ex));
         }
     }
 
@@ -65,11 +64,11 @@ class CodeGenerationHelper {
     static String removeAnnotation(
             String code,
             Class<?> annotationType,
-            String fullyQualifiedSourceClassName) throws CodeGenerationException {
+            String fullyQualifiedSourceClassName) {
         String annotationStartRegex = "@\\s*" + annotationType.getSimpleName() + "\\s*\\(";
         int annotationStartIndex = indexOfRegex(code, annotationStartRegex);
         if (annotationStartIndex == -1) {
-            throw new CodeGenerationException("Annotation not found: " + annotationType);
+            throw new CodeGeneratorException("Annotation not found: " + annotationType);
         }
 
         code = replace(code, annotationStartRegex, "(", true, fullyQualifiedSourceClassName);
@@ -81,7 +80,54 @@ class CodeGenerationHelper {
         return code;
     }
 
-    static String skipBrackets(char opening, char closing, String code, int startIndex) {
+    static String replace(Replace[] replacements, String code, String fullyQualifiedSourceClassName) {
+        for (Replace replacement : replacements) {
+            String from = replacement.from();
+            String to = replacement.to();
+            code = replace(code, from, to, replacement.regex(), fullyQualifiedSourceClassName);
+        }
+        return code;
+    }
+
+    static String replace(
+            String code,
+            String from,
+            String to,
+            boolean regex,
+            String fullyQualifiedSourceClassName) {
+        if (regex) {
+            Pattern pattern = Pattern.compile(from, Pattern.MULTILINE | Pattern.DOTALL);
+            Matcher matcher = pattern.matcher(code);
+            if (matcher.find()) {
+                code = matcher.replaceAll(to);
+            } else {
+                throw new CodeGeneratorException("Regex search term not found in " + fullyQualifiedSourceClassName + ": " + from);
+            }
+            return code;
+        } else {
+            if (code.contains(from)) {
+                return code.replace(from, to);
+            } else {
+                throw new CodeGeneratorException("Search term not found in " + fullyQualifiedSourceClassName + ": " + from);
+            }
+        }
+    }
+
+    static void writeFile(
+            String source,
+            String fullyQualifiedTargetClassName,
+            ProcessingEnvironment processingEnv) {
+        try {
+            JavaFileObject targetFile = processingEnv.getFiler().createSourceFile(fullyQualifiedTargetClassName);
+            try (PrintWriter targetWriter = new PrintWriter(targetFile.openWriter())) {
+                targetWriter.write(source);
+            }
+        } catch (IOException ex) {
+            throw new CodeGeneratorException("Could not generate file " + fullyQualifiedTargetClassName + ": " + ex.getMessage());
+        }
+    }
+
+    private static String skipBrackets(char opening, char closing, String code, int startIndex) {
         // there could be some whitespace before the opening bracket
         assert code.charAt(startIndex) == opening;
         int bracketCount = 0;
@@ -122,40 +168,7 @@ class CodeGenerationHelper {
         }
     }
 
-    static String replace(Replace[] replacements, String code, String fullyQualifiedSourceClassName) throws CodeGenerationException {
-        for (Replace replacement : replacements) {
-            String from = replacement.from();
-            String to = replacement.to();
-            code = replace(code, from, to, replacement.regex(), fullyQualifiedSourceClassName);
-        }
-        return code;
-    }
-
-    static String replace(
-            String code,
-            String from,
-            String to,
-            boolean regex,
-            String fullyQualifiedSourceClassName) throws CodeGenerationException {
-        if (regex) {
-            Pattern pattern = Pattern.compile(from, Pattern.MULTILINE | Pattern.DOTALL);
-            Matcher matcher = pattern.matcher(code);
-            if (matcher.find()) {
-                code = matcher.replaceAll(to);
-            } else {
-                throw new CodeGenerationException("Regex search term not found in " + fullyQualifiedSourceClassName + ": " + from);
-            }
-            return code;
-        } else {
-            if (code.contains(from)) {
-                return code.replace(from, to);
-            } else {
-                throw new CodeGenerationException("Search term not found in " + fullyQualifiedSourceClassName + ": " + from);
-            }
-        }
-    }
-
-    static int indexOfRegex(String code, String regex) {
+    private static int indexOfRegex(String code, String regex) {
         Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE | Pattern.DOTALL);
         Matcher matcher = pattern.matcher(code);
         return matcher.find() ? matcher.start() : -1;
@@ -170,19 +183,5 @@ class CodeGenerationHelper {
             s.append("\n");
         }
         return s.toString();
-    }
-
-    static void writeFile(
-            String source,
-            String fullyQualifiedTargetClassName,
-            ProcessingEnvironment processingEnv) throws CodeGenerationException {
-        try {
-            JavaFileObject targetFile = processingEnv.getFiler().createSourceFile(fullyQualifiedTargetClassName);
-            try (PrintWriter targetWriter = new PrintWriter(targetFile.openWriter())) {
-                targetWriter.write(source);
-            }
-        } catch (IOException ex) {
-            throw new CodeGenerationException("Could not generate file " + fullyQualifiedTargetClassName + ": " + ex.getMessage());
-        }
     }
 }
