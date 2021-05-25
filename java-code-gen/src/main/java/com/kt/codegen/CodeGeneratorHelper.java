@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 import static javax.tools.Diagnostic.Kind.NOTE;
 
 
-class CodeGenerationHelper {
+class CodeGeneratorHelper {
     enum ReplacementMethod {
         PLAIN_ALL,
         REGEX_ALL,
@@ -28,7 +28,7 @@ class CodeGenerationHelper {
     static Path findSourceDirectory(String relativeSourceDir, Messager messager) {
         Path classFileDir;
         try {
-            classFileDir = Path.of(CodeGenerationHelper.class.getClassLoader().getResource(".").toURI());
+            classFileDir = Path.of(CodeGeneratorHelper.class.getClassLoader().getResource(".").toURI());
         } catch (URISyntaxException ex) {
             throw new CodeGeneratorException(ex.getMessage());
         }

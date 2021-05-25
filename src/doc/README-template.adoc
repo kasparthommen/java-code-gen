@@ -14,12 +14,11 @@ This library provides the following code-generating annotations:
 * {INSTANTIATE} generates concrete instantiations of
 generic classes analogous to C++ templates, e.g. `MyListString` from
 `MyList<T>`
-* {GENERATE} generates new classes by performing string or
-  regex replacements on the source code
+* {GENERATE} generates new classes by applying string or
+  regex replacements to the source code
 
 === Why should I use it?
-The single biggest advantage of this library over generic string template
-engines such as
+The main advantage of this library over generic template engines such as
 link:https://www.stringtemplate.org/[StringTemplate],
 link:https://velocity.apache.org/[Velocity]
 or
@@ -28,10 +27,10 @@ link:https://freemarker.apache.org/[FreeMaker] is:
 *Your template is actual code*.
 
 Thus, instead of having to write a placeholder-sprinkled, engine-specific
-template file, your "template" is a Java class, which has the following
-benefits:
+template file, your "template" is a normal Java class with annotations.
+The benefits are as follows:
 
-  ** The "template" is running code
+  ** The "template" is running code rather than some resource file
   ** The "template" can be unit tested
   ** The "template" enjoys IDE syntax highlighting - no template
      engine-specific plugins required
@@ -129,7 +128,7 @@ you can set `append` to `false`.
 `true`.
 
 
-== Generate classes using {GENERATE}
+== Generate classes with {GENERATE}
 Say you are working on a primitive collection library, and you have successfully written
 a `double` list implementation:
 [source,java]

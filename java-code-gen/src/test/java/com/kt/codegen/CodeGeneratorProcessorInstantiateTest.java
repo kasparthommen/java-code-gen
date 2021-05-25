@@ -3,13 +3,18 @@ package com.kt.codegen;
 
 import org.junit.jupiter.api.Test;
 
-import static com.kt.codegen.CodeGenerationTestHelper.checkGeneration;
+import static com.kt.codegen.CodeGeneratorTestHelper.checkGeneration;
 
 
 public class CodeGeneratorProcessorInstantiateTest {
     @Test
     public void oneTypeArg() throws Exception {
-        String source = """
+        checkGeneration(
+                new CodeGeneratorProcessor(),
+
+                "z.x.y.Klass",
+
+                """
                 package x.y;
                             
                 import com.kt.codegen.Instantiations;
@@ -19,7 +24,7 @@ public class CodeGeneratorProcessorInstantiateTest {
                 import java.util.List;
                 
                 
-                 @ SourceDirectory("../../src/main/java")
+                 @ SourceDirectory("../../src/main/java/z")
 
                 @
                   Instantiate(Date.class)
@@ -31,9 +36,11 @@ public class CodeGeneratorProcessorInstantiateTest {
                     public Klass(T arg) {
                     }
                 }
-                """;
+                """,
 
-        String expectedTarget = """
+                "x.y.KlassDate",
+
+                """
                 // generated from x.y.Klass
                 package x.y;
                             
@@ -46,14 +53,18 @@ public class CodeGeneratorProcessorInstantiateTest {
                     public KlassDate(Date arg) {
                     }
                 }
-                """;
-
-        checkGeneration(new CodeGeneratorProcessor(), "x.y.Klass", source, "x.y.KlassDate", expectedTarget);
+                """);
     }
 
     @Test
     public void interfaceOneTypeArg() throws Exception {
-        String source = """
+
+        checkGeneration(
+                new CodeGeneratorProcessor(),
+
+                "x.y.PrimitiveSequence",
+
+                """
                 package x.y;
                 import com.kt.codegen.Instantiate;
                 
@@ -65,9 +76,11 @@ public class CodeGeneratorProcessorInstantiateTest {
                 
                     T getImpl(int index);
                 }
-                """;
+                """,
 
-        String expectedTarget = """
+                "x.y.PrimitiveSequenceInt",
+
+                """
                 // generated from x.y.PrimitiveSequence
                 package x.y;
 
@@ -78,14 +91,17 @@ public class CodeGeneratorProcessorInstantiateTest {
                 
                     int getImpl(int index);
                 }
-                """;
-
-        checkGeneration(new CodeGeneratorProcessor(), "x.y.PrimitiveSequence", source, "x.y.PrimitiveSequenceInt", expectedTarget);
+                        """);
     }
 
     @Test
     public void twoTypeArgsWithReplacement() throws Exception {
-        String source = """
+        checkGeneration(
+                new CodeGeneratorProcessor(),
+
+                "x.y.Klass",
+
+                """
                 package x.y;
                             
                 import com.kt.codegen.Instantiate;
@@ -115,9 +131,11 @@ public class CodeGeneratorProcessorInstantiateTest {
                         T2 t = null;
                     }
                 }
-                """;
+                """,
 
-        String expectedTarget1 = """
+                "x.y.DoubleDateKlass",
+
+                """
                 // generated from x.y.Klass
                 package x.y;
                             
@@ -132,11 +150,48 @@ public class CodeGeneratorProcessorInstantiateTest {
                         Date t = new Date(0);
                     }
                 }
-                """;
+                """);
 
-        checkGeneration(new CodeGeneratorProcessor(), "x.y.Klass", source, "x.y.DoubleDateKlass", expectedTarget1);
+        checkGeneration(
+                new CodeGeneratorProcessor(),
 
-        String expectedTarget2 = """
+                "x.y.Klass",
+
+                """
+                package x.y;
+                            
+                import com.kt.codegen.Instantiate;
+                import com.kt.codegen.Replace;
+                import java.util.Date;
+                
+                @Instantiate(
+                    value = { double.class, Date.class },
+                    replace = {
+                        @Replace(from = "(T1[]) new Object", to = "new  double "),
+                        @Replace(from = "= null", to = "= new Date(0)")
+                    }, append = false
+                )
+                @Instantiate(
+                    value = { String.class, Float.class },
+                    replace = {
+                        @Replace(from = "(T1[]) new Object", to = "new String"),
+                        @Replace(from = "= null", to = "= Float.NaN")
+                    }
+                )
+                public class Klass<T1 extends Number, T2> {
+                    private T1 t1;
+                    private T2 t2;
+                            
+                    void x() {
+                        T1[] array = (T1[]) new Object[42];
+                        T2 t = null;
+                    }
+                }
+                """,
+
+                "x.y.KlassStringFloat",
+
+                """
                 // generated from x.y.Klass
                 package x.y;
                             
@@ -151,8 +206,6 @@ public class CodeGeneratorProcessorInstantiateTest {
                         Float t = Float.NaN;
                     }
                 }
-                """;
-
-        checkGeneration(new CodeGeneratorProcessor(), "x.y.Klass", source, "x.y.KlassStringFloat", expectedTarget2);
+                """);
     }
 }

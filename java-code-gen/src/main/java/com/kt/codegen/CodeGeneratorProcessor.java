@@ -24,12 +24,12 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static com.kt.codegen.CodeGenerationHelper.findSourceDirectory;
-import static com.kt.codegen.CodeGenerationHelper.readSourceCode;
-import static com.kt.codegen.CodeGenerationHelper.removeAnnotations;
-import static com.kt.codegen.CodeGenerationHelper.removeImport;
-import static com.kt.codegen.CodeGenerationHelper.replace;
-import static com.kt.codegen.CodeGenerationHelper.writeFile;
+import static com.kt.codegen.CodeGeneratorHelper.findSourceDirectory;
+import static com.kt.codegen.CodeGeneratorHelper.readSourceCode;
+import static com.kt.codegen.CodeGeneratorHelper.removeAnnotations;
+import static com.kt.codegen.CodeGeneratorHelper.removeImport;
+import static com.kt.codegen.CodeGeneratorHelper.replace;
+import static com.kt.codegen.CodeGeneratorHelper.writeFile;
 import static java.util.stream.Collectors.joining;
 import static javax.tools.Diagnostic.Kind.ERROR;
 import static javax.tools.Diagnostic.Kind.NOTE;

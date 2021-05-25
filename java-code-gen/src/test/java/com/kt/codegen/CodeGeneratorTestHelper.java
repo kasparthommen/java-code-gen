@@ -10,12 +10,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
 
-class CodeGenerationTestHelper {
+class CodeGeneratorTestHelper {
     static void checkGeneration(
             AbstractProcessor annotationProcessor,
             String sourceClassName,
@@ -31,7 +32,7 @@ class CodeGenerationTestHelper {
         // if this fails with the following error, then you'll have to add the "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED"
         // option to the JVM running this test:
         //
-        // java.lang.IllegalAccessError: class com.google.testing.compile.Parser (in unnamed module @0x7823a2f9) cannot access class
+        // java.lang.IllegalAccessError: class com.google.testing.compile.Parser (in unnamed module @0xxxxxxxx) cannot access class
         // com.sun.tools.javac.api.JavacTool (in module jdk.compiler) because module jdk.compiler does not export com.sun.tools.javac.api
         // to unnamed module @0x7823a2f9
         assertThat(compilation)
@@ -44,7 +45,7 @@ class CodeGenerationTestHelper {
         // that's where the code generator looks for the source file. We make sure though that we clean things
         // up upon JVM shutdown. Note that calling deleteOnExit() on the package root directory doesn't seem to
         // be working, so we do recursive cleanup manually in a shutdown hook.
-        Path classFileDir = Path.of(CodeGenerationTestHelper.class.getClassLoader().getResource(".").toURI());
+        Path classFileDir = Path.of(CodeGeneratorTestHelper.class.getClassLoader().getResource(".").toURI());
         Path javaRoot = classFileDir.resolve("../../src/main/java/").normalize();
         Path sourceFile = javaRoot.resolve(fullyQualifiedClassName.replace(".", File.separator) + ".java");
         final Path rootToDeleteOnExit = javaRoot.resolve(fullyQualifiedClassName.split("\\.")[0]);
@@ -58,7 +59,9 @@ class CodeGenerationTestHelper {
             private void deleteRecursively(Path path) {
                 try {
                     if (Files.isDirectory(path)) {
-                        Files.list(path).forEach(this::deleteRecursively);
+                        try (Stream<Path> list = Files.list(path)) {
+                            list.forEach(this::deleteRecursively);
+                        }
                     }
                     try {
                         Thread.sleep(200);

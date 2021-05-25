@@ -3,13 +3,18 @@ package com.kt.codegen;
 
 import org.junit.jupiter.api.Test;
 
-import static com.kt.codegen.CodeGenerationTestHelper.checkGeneration;
+import static com.kt.codegen.CodeGeneratorTestHelper.checkGeneration;
 
 
 public class CodeGeneratorProcessorGenerateTest {
     @Test
     public void classRename() throws Exception {
-        String source = """
+        checkGeneration(
+                new CodeGeneratorProcessor(),
+
+                "x.y.Before",
+
+                """
                 package x.y;
                 
                 import com.kt.codegen.Generates;
@@ -24,9 +29,11 @@ public class CodeGeneratorProcessorGenerateTest {
                     this.q = q;
                   }
                 }
-                """;
+                """,
 
-        String expectedTarget = """
+                "x.y.After",
+
+                """
                 // generated from x.y.Before
                 package x.y;
                 
@@ -37,15 +44,18 @@ public class CodeGeneratorProcessorGenerateTest {
                     this.q = q;
                   }
                 }
-                """;
-
-        checkGeneration(new CodeGeneratorProcessor(), "x.y.Before", source, "x.y.After", expectedTarget);
-    }
+                """);
+}
 
     @Test
     public void klassRenameAndReplacements() throws Exception {
         for (String cheekyString : new String[] { "(", ")", "[", "]", "{", "}", "@", "\\\"" }) {
-            String source = """
+            checkGeneration(
+                    new CodeGeneratorProcessor(),
+
+                    "z.x.y.Before",
+
+                    """
                     package x.y;
                     
                     import com.kt.codegen.Generate;
@@ -59,7 +69,7 @@ public class CodeGeneratorProcessorGenerateTest {
                           to = "long"),  @Replace(from = "xx", to="trying to make the parser stumble: $$$$")
                     } )
                     
-                      @ SourceDirectory("../../src/main/java")
+                      @ SourceDirectory("../../src/main/java/z/")
                     
                     @Generate(name="After2")
                      
@@ -70,9 +80,11 @@ public class CodeGeneratorProcessorGenerateTest {
                         this.int1 = q;
                       }
                     }
-                    """.replace("$$$$", cheekyString);
+                    """.replace("$$$$", cheekyString),
 
-            String expectedTarget1 = """
+                    "x.y.After",
+
+                    """
                     // generated from x.y.Before
                     package x.y;
                     
@@ -83,9 +95,43 @@ public class CodeGeneratorProcessorGenerateTest {
                         this.long1 = p;
                       }
                     }
-                    """.replace("$$$$", cheekyString.replace("\\\"", "\""));
+                    """.replace("$$$$", cheekyString.replace("\\\"", "\"")));
 
-            String expectedTarget2 = """
+            checkGeneration(
+                    new CodeGeneratorProcessor(),
+
+                    "x.y.Before",
+
+                    """
+                    package x.y;
+                    
+                    import com.kt.codegen.Generate;
+                    import com.kt.codegen.SourceDirectory;
+                    import com.kt.codegen.Replace;
+    
+                         @ Generate ( name    ="After"
+                         , replace=     {
+                        @Replace(from="q", to="p"),
+                        @Replace(from = "int",
+                          to = "long"),  @Replace(from = "xx", to="trying to make the parser stumble: $$$$")
+                    } )
+                    
+                      @ SourceDirectory("../../src/main/java/z/")
+                    
+                    @Generate(name="After2")
+                     
+                    public  class Before<T, U> {
+                      int int1;  // xx
+                      
+                      public Before(int q) {
+                        this.int1 = q;
+                      }
+                    }
+                    """.replace("$$$$", cheekyString),
+
+                    "x.y.After2",
+
+                    """
                     // generated from x.y.Before
                     package x.y;
                     
@@ -96,10 +142,7 @@ public class CodeGeneratorProcessorGenerateTest {
                         this.int1 = q;
                       }
                     }
-                    """.replace("$$$$", cheekyString.replace("\\\"", "\""));
-
-            checkGeneration(new CodeGeneratorProcessor(), "x.y.Before", source, "x.y.After", expectedTarget1);
-            checkGeneration(new CodeGeneratorProcessor(), "x.y.Before", source, "x.y.After2", expectedTarget2);
+                    """.replace("$$$$", cheekyString.replace("\\\"", "\"")));
         }
     }
 
@@ -107,6 +150,7 @@ public class CodeGeneratorProcessorGenerateTest {
     public void importRemoval() throws Exception {
         checkGeneration(
                 new CodeGeneratorProcessor(),
+
                 "x.y.Before",
 
                 """
@@ -132,6 +176,7 @@ public class CodeGeneratorProcessorGenerateTest {
 
         checkGeneration(
                 new CodeGeneratorProcessor(),
+
                 "x.y.Before",
 
                 """
@@ -156,6 +201,7 @@ public class CodeGeneratorProcessorGenerateTest {
 
         checkGeneration(
                 new CodeGeneratorProcessor(),
+
                 "x.y.Before",
 
                 """
@@ -180,6 +226,7 @@ public class CodeGeneratorProcessorGenerateTest {
 
         checkGeneration(
                 new CodeGeneratorProcessor(),
+
                 "x.y.Before",
 
                 """
@@ -204,6 +251,7 @@ public class CodeGeneratorProcessorGenerateTest {
 
         checkGeneration(
                 new CodeGeneratorProcessor(),
+
                 "x.y.Before",
 
                 """
@@ -229,6 +277,7 @@ public class CodeGeneratorProcessorGenerateTest {
 
         checkGeneration(
                 new CodeGeneratorProcessor(),
+
                 "x.y.Before",
 
                 """
@@ -254,6 +303,7 @@ public class CodeGeneratorProcessorGenerateTest {
 
         checkGeneration(
                 new CodeGeneratorProcessor(),
+
                 "x.y.Before",
 
                 """
