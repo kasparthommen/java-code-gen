@@ -34,7 +34,7 @@
 
     <modules>
         <module>java-code-gen</module>
-        <module>java-code-gen-demo</module>
+        <module>java-code-gen-doc-snippets</module>
     </modules>
 
 

@@ -3,8 +3,8 @@
 :INSTANTIATE:       pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
 :GENERATE:          pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Generate.java[`@Generate`]]
 :REPLACE:           pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
-:SRC_DIR:           ../../java-code-gen-demo/src/main/java/com/kt/codegen/demo
-:GEN_DIR:           ../../java-code-gen-demo/target/generated-sources/annotations/com/kt/codegen/demo
+:SRC_DIR:           ../../java-code-gen-doc-snippets/src/main/java/com/kt/codegen/demo
+:GEN_DIR:           ../../java-code-gen-doc-snippets/target/generated-sources/annotations/com/kt/codegen/demo
 :SOURCE_DIRECTORY:  pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/SourceDirectory.java[`@SourceDirectory`]]
 
 == TL;DR
