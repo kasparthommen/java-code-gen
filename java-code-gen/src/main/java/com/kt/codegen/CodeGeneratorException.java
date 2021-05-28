@@ -2,8 +2,9 @@ package com.kt.codegen;
 
 
 /**
- * An exception type that represents errors during code generation. Introduced to enable centralized
- * exception handling to send errors to the {@link javax.annotation.processing.Messager}.
+ * An exception type that represents errors during code generation in the annotation processor.
+ * Introduced to enable centralized exception handling for sending error messages to the
+ * {@link javax.annotation.processing.Messager}.
  */
 public class CodeGeneratorException extends RuntimeException {
     /**

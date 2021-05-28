@@ -13,5 +13,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface Derivatives {
+    /**
+     * The contained annotations.
+     *
+     * @return The contained annotations.
+     */
     Derive[] value();
 }

@@ -25,13 +25,12 @@
     <build>
         <plugins>
 
-            <!-- accept compiler errors (in the generated code) - that's the whole point of the demo -->
+            <!-- ignore missing javadoc warnings as this is just sample code -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
+                <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-                    <failOnError>false</failOnError>
+                    <doclint>all,-missing</doclint>
                 </configuration>
             </plugin>
 

@@ -30,7 +30,7 @@ public class CodeGeneratorProcessorInstantiateTest {
                   Instantiate(Date.class)
                 public class Klass<T
                                      extends
-                                      Number>   {
+                                      Number>   {  // comment after brace
                     private List<T> list;
                     
                     public Klass(T arg) {
@@ -47,7 +47,7 @@ public class CodeGeneratorProcessorInstantiateTest {
                 import java.util.Date;
                 import java.util.List;
                 
-                public class KlassDate {
+                public class KlassDate {  // comment after brace
                     private List<Date> list;
                     
                     public KlassDate(Date arg) {

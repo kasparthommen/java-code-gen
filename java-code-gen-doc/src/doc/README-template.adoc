@@ -9,14 +9,61 @@
 
 
 == TL;DR
-=== What is this?
+=== What does this library provide?
 This library provides the following code-generating annotations:
 
-* {INSTANTIATE} generates concrete instantiations of
-generic classes analogous to C++ templates, e.g. `MyListString` from
-`MyList<T>`
-* {DERIVE} generates new classes derived from existing ones by applying
-  string or regex replacements to the source code
+* {INSTANTIATE} generates concrete instantiations of generic classes
+  analogous to C++ templates:
+
+[cols="1a"]
+|===
+|
+[source,java]
+----
+/* you write... */
+@Instantiate(String.class)
+class MyList<T> {
+    private T[] array;
+    // ...
+}
+----
+|
+[source,java]
+----
+/* ... and you'll get */
+class MyListString {
+    private String[] array;
+    // ...
+}
+----
+|===
+
+* {DERIVE} generates new classes from existing ones by applying
+  string or regex replacements to the source code:
+
+[cols="1a"]
+|===
+|
+[source,java]
+----
+/* you write... */
+@Derive(name = "MyFloatList", replace = @Replace(from = "double", to = "float"))
+class MyDoubleList {
+    private double[] array;
+    // ...
+}
+----
+|
+[source,java]
+----
+/* ... and you'll get */
+class MyFloatList {
+    private float[] array;
+    // ...
+}
+----
+|===
+
 
 === Why should I use it?
 The main advantage of this library over generic template engines such as
@@ -25,13 +72,13 @@ link:https://velocity.apache.org/[Velocity]
 or
 link:https://freemarker.apache.org/[FreeMaker] is:
 
-*Your template is actual code*.
+*Your template is actual code!*
 
 Thus, instead of having to write a placeholder-sprinkled, engine-specific
 template file, your "template" is a normal Java class with annotations.
 The benefits are as follows:
 
-  ** The "template" is running code rather than some resource file
+  ** The "template" is source code rather than a resource file
   ** The "template" can be unit tested
   ** The "template" enjoys IDE syntax highlighting - no template
      engine-specific plugins required
@@ -76,17 +123,11 @@ get us all the way, but fret not, there are custom string replacements:
 include::{SRC_DIR}/list3/MyList.java[]
 ----
 
-And our list compiles:
+Now the generated string list is safe:
 [source,java]
 ----
 include::{GEN_DIR}/list3/MyListString.java[]
 ----
-
-If simple string replacement won't do the trick you set `@Replace(..., regex = true)` for
-matching regular expressions.
-
-Also, you can specify multiple replacements with
-`replace = {@Replace(...), @Replace(...), ...}`.
 
 
 === Primitives
@@ -119,10 +160,12 @@ include::{SRC_DIR}/map/MyMap.java[]
 * For projects that don't follow the Maven directory layout you can specify the relative
   source directory with {SOURCE_DIRECTORY} on the source class.
 * If normal string replacement won't cut it, you can set `{REPLACE}.regex` to `true`.
+* You can specify multiple replacements with
+`replace = {@Replace(...), @Replace(...), ...}`.
 
 
 == Generate derived classes with {DERIVE}
-Say you are working on a primitive collection library, and you have successfully written
+Say you are working on a primitive collection library. You have just finished writing
 a `double` list implementation:
 [source,java]
 ----
@@ -138,9 +181,9 @@ apart because you'll forget to apply that one fix to the `float` implementation.
 . You fire up a generic template engine, convert this nice, working, unit-tested,
 syntax-highlighted, auto-formatted, error-checked class into a template text
 file that immediately loses all those nice properties, and you start configuring
-that template engine.
+the template engine.
 
-. You annotate your class as follows:
+. Or you annotate the class as follows:
 
 [source,java]
 ----

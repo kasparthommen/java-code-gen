@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 
 /**
- * Specifies that a new class should be generated/derived off the annotated class. The target class
+ * Specifies that a new class should be generated, derived off the annotated class. The target class
  * name is specified by {@link #name()} and string replacements (plain or regex) are specified by
  * {@link #replace()}.
  */
@@ -18,21 +18,29 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Derive {
     /**
-     * The simple (i.e., package-stripped) target class name to generate.
+     * The target class name (without package prefix) to generate.
      *
-     * @return The simple (i.e., package-stripped) target class name to generate.
+     * @return The target class name (without package prefix) to generate.
      */
     String name();
 
     /**
-     * An optional list of string replacements (plain or regex) to apply to the source code.
-     * This can be useful to e.g. replace generic array construction of generic type {@code T1} with
-     * primitive array construction:
-     * <br><br>
+     * A list of string replacements (plain or regex) to apply to the source code. These replacements
+     * specify how the source class should be modified to arrive at the derived target class. For
+     * example, you may want to generate a derived version of a class that doesn't use {@code double}s
+     * but {@code float}s instead. Then you could specify the following replacements:
      *
-     * {@code @Replace(from = "(T1[]) new Object[", to = "new double[" }
+     * <pre>
+     * {@code
+     * replace = {
+     *     @Replace(from = "\\bdouble\\b", to = "float", regex = true),
+     *     @Replace(from = "Double.NaN", to = "Float.NaN"),
+     *     ...
+     * }
+     * }
+     * </pre>
      *
-     * @return An optional list of string replacements (plain or regex) to apply to the source code..
+     * @return A list of string replacements (plain or regex) to apply to the source code..
      */
-    Replace[] replace() default {};
+    Replace[] replace();
 }

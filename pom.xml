@@ -155,7 +155,6 @@
         </plugins>
     </build>
 
-
     <distributionManagement>
 
         <snapshotRepository>

@@ -71,7 +71,7 @@ public class CodeGeneratorProcessorDeriveTest {
                     
                       @ SourceDirectory("../../src/main/java/z/")
                     
-                    @Derive(name="After2")
+                    @Derive(name="After2", replace = {})
                      
                     public  class Before<T, U> {
                       int int1;  // xx
@@ -118,7 +118,7 @@ public class CodeGeneratorProcessorDeriveTest {
                     
                       @ SourceDirectory("../../src/main/java/z/")
                     
-                    @Derive(name="After2")
+                    @Derive(name="After2", replace = {})
                      
                     public  class Before<T, U> {
                       int int1;  // xx

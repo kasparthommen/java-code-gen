@@ -28,9 +28,12 @@ public @interface Instantiate {
      * An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.
      * This can be useful to e.g. replace generic array construction of generic type {@code T1} with
      * primitive array construction:
-     * <br><br>
      *
-     * {@code @Replace(from = "(T1[]) new Object[", to = "new double[" }
+     * <pre>
+     * {@code
+     * @Replace(from = "(T1[]) new Object[", to = "new double["
+     * }
+     * </pre>
      *
      * @return An optional list of string replacements (plain or regex) to apply on top of the generic type replacements.
      */

@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 
 /**
- * Specifies a string replacement (plain or regex).
+ * Specifies a string or regular expression replacement in source code.
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.SOURCE)
@@ -21,16 +21,18 @@ public @interface Replace {
     String from();
 
     /**
-     * The string to replace it with.
+     * The string to replace {@link #from()} with.
      *
-     * @return The string to replace it with.
+     * @return The string to replace {@link #from()} with.
      */
     String to();
 
     /**
-     * Specifies if the string replacements should be plain (false) or using regular expressions (true).
+     * Specifies if {@link #from()} is a plain string to replace (false) or a regular
+     * expression (true) to replace.
      *
-     * @return Specifies if the string replacements should be plain (false) or using regular expressions (true).
+     * @return Specifies if {@link #from()} is a plain string to replace (false) or a
+     * regular expression (true) to replace.
      */
     boolean regex() default false;
 }

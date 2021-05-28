@@ -17,6 +17,7 @@ import java.lang.annotation.Target;
 public @interface SourceDirectory {
     /**
      * The source directory relative to the class root.
+     *
      * @return The source directory relative to the class root.
      */
     String value();
