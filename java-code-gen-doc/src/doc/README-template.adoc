@@ -1,5 +1,7 @@
 = Java Code Generator Annotations
 
+image:https://maven-badges.herokuapp.com/maven-central/io.github.kasparthommen.codegen/java-code-gen/badge.svg[link="https://maven-badges.herokuapp.com/maven-central/io.github.kasparthommen.codegen/java-code-gen"]
+
 :INSTANTIATE:       pass:quotes[link:java-code-gen/src/main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
 :DERIVE:            pass:quotes[link:java-code-gen/src/main/java/com/kt/codegen/Derive.java[`@Derive`]]
 :REPLACE:           pass:quotes[link:java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]
