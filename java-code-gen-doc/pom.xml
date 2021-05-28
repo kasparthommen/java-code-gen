@@ -12,17 +12,15 @@
 
     <artifactId>java-code-gen-doc</artifactId>
 
+    <description>Contains the template for README.adoc plus code snippets being included in it.</description>
 
     <dependencies>
-
         <dependency>
             <groupId>io.github.kasparthommen.codegen</groupId>
             <artifactId>java-code-gen</artifactId>
             <version>${project.version}</version>
         </dependency>
-
     </dependencies>
-
 
     <build>
         <plugins>

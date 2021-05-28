@@ -1,11 +1,11 @@
 = Java Code Generator Annotations
 
-:INSTANTIATE:       pass:quotes[link:../main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
-:DERIVE:            pass:quotes[link:../main/java/com/kt/codegen/Derive.java[`@Derive`]]
-:REPLACE:           pass:quotes[link:../main/java/com/kt/codegen/Replace.java[`@Replace`]]]
+:INSTANTIATE:       pass:quotes[link:java-code-gen/src/main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
+:DERIVE:            pass:quotes[link:java-code-gen/src/main/java/com/kt/codegen/Derive.java[`@Derive`]]
+:REPLACE:           pass:quotes[link:java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]
+:SOURCE_DIRECTORY:  pass:quotes[link:java-code-gen/src/main/java/com/kt/codegen/SourceDirectory.java[`@SourceDirectory`]]
 :SRC_DIR:           ../main/java/com/kt/codegen/demo
 :GEN_DIR:           ../../target/generated-sources/annotations/com/kt/codegen/demo
-:SOURCE_DIRECTORY:  pass:quotes[link:../main/java/com/kt/codegen/SourceDirectory.java[`@SourceDirectory`]]
 
 
 == TL;DR
@@ -115,21 +115,10 @@ include::{SRC_DIR}/map/MyMap.java[]
 ----
 
 
-== Options
-The following options allow for more flexibility:
-
-* {INSTANTIATE}
-  ** For projects that don't follow the maven directory layout you can specify the relative
-source directory with {SOURCE_DIRECTORY}.
-  ** I you prefer prepending the type to the class rather than the default appending variant
-(i.e., `StringMyList` rather than `MyListString` in the example above) then
-you can set `append` to `false`.
-
-* {DERIVE}
-  ** You can also change the relative source directory using {SOURCE_DIRECTORY}.
-* {REPLACE}
-  ** If normal string replacement won't cut it, you can set `regex` to
-`true`.
+=== Notes
+* For projects that don't follow the Maven directory layout you can specify the relative
+  source directory with {SOURCE_DIRECTORY} on the source class.
+* If normal string replacement won't cut it, you can set `{REPLACE}.regex` to `true`.
 
 
 == Generate derived classes with {DERIVE}
@@ -171,5 +160,10 @@ And:
 include::{GEN_DIR}/double2/MyLongList.java[]
 ----
 
-Note that you can also specify custom string replacements using
-`@Derive(..., replace = { @Replace(...), ... })`.
+=== Notes
+
+* The relative source directory can also be changed using {SOURCE_DIRECTORY}.
+* I you prefer prepending the concrete type(s) to the class rather than the default
+  appending style (i.e., `StringMyList` rather than `MyListString`) then set
+  `{INSTANTIATE}.append` to `false`.
+* Custom string replacements can be specified in `{INSTANTIATE}.replace`.
