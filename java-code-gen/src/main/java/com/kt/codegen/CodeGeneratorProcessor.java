@@ -36,11 +36,11 @@ import static javax.tools.Diagnostic.Kind.NOTE;
 
 
 /**
- * The annotation processor for {@link Generate} and {@link Instantiate} annotations.
+ * The annotation processor for {@link Derive} and {@link Instantiate} annotations.
  */
 @SupportedAnnotationTypes({
-        "com.kt.codegen.Generates",
-        "com.kt.codegen.Generate",
+        "com.kt.codegen.Derivatives",
+        "com.kt.codegen.Derive",
         "com.kt.codegen.Instantiations",
         "com.kt.codegen.Instantiate"
 })
@@ -57,8 +57,8 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Messager messager = processingEnv.getMessager();
         try {
-            for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Generates.class, Generate.class))) {
-                processGenerate((TypeElement) element, messager);
+            for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Derivatives.class, Derive.class))) {
+                processDerive((TypeElement) element, messager);
             }
             for (Element element : roundEnv.getElementsAnnotatedWithAny(Set.of(Instantiations.class, Instantiate.class))) {
                 processInstantiate((TypeElement) element, messager);
@@ -70,26 +70,26 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         return true;
     }
 
-    private void processGenerate(TypeElement sourceClass, Messager messager) {
+    private void processDerive(TypeElement sourceClass, Messager messager) {
         messager.printMessage(NOTE, "Generating code for " + sourceClass.getQualifiedName());
-        Generates generates = sourceClass.getAnnotation(Generates.class);
-        if (generates != null) {
-            for (Generate generate : generates.value()) {
-                processGenerate(sourceClass, generate, messager);
+        Derivatives derivatives = sourceClass.getAnnotation(Derivatives.class);
+        if (derivatives != null) {
+            for (Derive derive : derivatives.value()) {
+                processDerive(sourceClass, derive, messager);
             }
         }
-        Generate generate = sourceClass.getAnnotation(Generate.class);
-        if (generate != null) {
-            processGenerate(sourceClass, generate, messager);
+        Derive derive = sourceClass.getAnnotation(Derive.class);
+        if (derive != null) {
+            processDerive(sourceClass, derive, messager);
         }
     }
 
-    private void processGenerate(TypeElement sourceClass, Generate generate, Messager messager) {
+    private void processDerive(TypeElement sourceClass, Derive derive, Messager messager) {
         process(
                 sourceClass,
                 getSourceDirectory(sourceClass),
-                new Class[] { Generate.class, Generates.class, SourceDirectory.class },
-                generate,
+                new Class[] { Derive.class, Derivatives.class, SourceDirectory.class },
+                derive,
                 messager);
     }
 
@@ -138,13 +138,13 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             customAndTypeReplaces.add(new ReplaceImpl(from, to, true));
         }
 
-        GenerateImpl generate = new GenerateImpl(targetClassName, customAndTypeReplaces.toArray(Replace[]::new));
+        DeriveImpl derive = new DeriveImpl(targetClassName, customAndTypeReplaces.toArray(Replace[]::new));
 
         process(
                 sourceClass,
                 getSourceDirectory(sourceClass),
                 new Class[] { Instantiate.class, Instantiations.class, SourceDirectory.class },
-                generate,
+                derive,
                 messager);
         }
 
@@ -158,7 +158,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             TypeElement sourceClass,
             String relativeSourceDir,
             Class<? extends Annotation>[] annotationTypes,
-            Generate generate,
+            Derive derive,
             Messager messager) {
         // read source file
         Path sourceDir = findSourceDirectory(relativeSourceDir, messager);
@@ -167,7 +167,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
         // generate target files
         String pkg = FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName);
-        String fullyQualifiedTargetClassName = pkg + "." + generate.name();
+        String fullyQualifiedTargetClassName = pkg + "." + derive.name();
         if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
             throw new CodeGeneratorException(
                     "Target class name must be different from source class name, but was " + fullyQualifiedTargetClassName);
@@ -178,7 +178,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                 fullyQualifiedTargetClassName,
                 annotationTypes,
                 sourceCode,
-                generate.replace());
+                derive.replace());
 
         writeFile(targetCode, fullyQualifiedTargetClassName, processingEnv);
     }
@@ -196,8 +196,8 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
         targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
 
-        targetCode = removeImport(targetCode, Generates.class.getName(), fullyQualifiedSourceClassName);
-        targetCode = removeImport(targetCode, Generate.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Derivatives.class.getName(), fullyQualifiedSourceClassName);
+        targetCode = removeImport(targetCode, Derive.class.getName(), fullyQualifiedSourceClassName);
         targetCode = removeImport(targetCode, Instantiations.class.getName(), fullyQualifiedSourceClassName);
         targetCode = removeImport(targetCode, Instantiate.class.getName(), fullyQualifiedSourceClassName);
         targetCode = removeImport(targetCode, Replace.class.getName(), fullyQualifiedSourceClassName);
@@ -223,11 +223,11 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         throw new IllegalStateException("Cannot get to here");
     }
 
-    private static class GenerateImpl implements Generate {
+    private static class DeriveImpl implements Derive {
         private final String name;
         private final Replace[] replaces;
 
-        private GenerateImpl(String name, Replace[] replaces) {
+        private DeriveImpl(String name, Replace[] replaces) {
             this.name = name;
             this.replaces = replaces;
         }

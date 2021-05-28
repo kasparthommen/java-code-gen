@@ -14,31 +14,21 @@
     <artifactId>java-code-gen</artifactId>
 
 
-    <properties>
-        <auto-service.version>1.0</auto-service.version>
-    </properties>
-
-
     <dependencies>
 
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service-annotations</artifactId>
-            <version>${auto-service.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.google.testing.compile</groupId>
             <artifactId>compile-testing</artifactId>
-            <version>${compile-testing.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit-jupiter.version}</version>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>

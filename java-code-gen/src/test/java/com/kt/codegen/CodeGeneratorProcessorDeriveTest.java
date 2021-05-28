@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static com.kt.codegen.CodeGeneratorTestHelper.checkGeneration;
 
 
-public class CodeGeneratorProcessorGenerateTest {
+public class CodeGeneratorProcessorDeriveTest {
     @Test
     public void classRename() throws Exception {
         checkGeneration(
@@ -17,11 +17,11 @@ public class CodeGeneratorProcessorGenerateTest {
                 """
                 package x.y;
                 
-                import com.kt.codegen.Generates;
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derivatives;
+                import com.kt.codegen.Derive;
                 import com.kt.codegen.Replace;
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
                 public  class Before<T, U> {  // Beforex 1Before Before
                   int q;
                   
@@ -58,11 +58,11 @@ public class CodeGeneratorProcessorGenerateTest {
                     """
                     package x.y;
                     
-                    import com.kt.codegen.Generate;
+                    import com.kt.codegen.Derive;
                     import com.kt.codegen.SourceDirectory;
                     import com.kt.codegen.Replace;
     
-                         @ Generate ( name    ="After"
+                         @ Derive ( name    ="After"
                          , replace=     {
                         @Replace(from="q", to="p"),
                         @Replace(from = "int",
@@ -71,7 +71,7 @@ public class CodeGeneratorProcessorGenerateTest {
                     
                       @ SourceDirectory("../../src/main/java/z/")
                     
-                    @Generate(name="After2")
+                    @Derive(name="After2")
                      
                     public  class Before<T, U> {
                       int int1;  // xx
@@ -105,11 +105,11 @@ public class CodeGeneratorProcessorGenerateTest {
                     """
                     package x.y;
                     
-                    import com.kt.codegen.Generate;
+                    import com.kt.codegen.Derive;
                     import com.kt.codegen.SourceDirectory;
                     import com.kt.codegen.Replace;
     
-                         @ Generate ( name    ="After"
+                         @ Derive ( name    ="After"
                          , replace=     {
                         @Replace(from="q", to="p"),
                         @Replace(from = "int",
@@ -118,7 +118,7 @@ public class CodeGeneratorProcessorGenerateTest {
                     
                       @ SourceDirectory("../../src/main/java/z/")
                     
-                    @Generate(name="After2")
+                    @Derive(name="After2")
                      
                     public  class Before<T, U> {
                       int int1;  // xx
@@ -157,11 +157,11 @@ public class CodeGeneratorProcessorGenerateTest {
                 package x.y;
                 
                   import
-                    com.kt.codegen.Generate
+                    com.kt.codegen.Derive
                      ;
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derive;
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -183,9 +183,9 @@ public class CodeGeneratorProcessorGenerateTest {
                 package x.y;
 
                 
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derive;
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
 
                 public  class Before<T, U> {}
                 """,
@@ -207,10 +207,10 @@ public class CodeGeneratorProcessorGenerateTest {
                 """
                 package x.y;
 
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derive;
                 
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
 
                 public  class Before<T, U> {}
                 """,
@@ -233,10 +233,10 @@ public class CodeGeneratorProcessorGenerateTest {
                 package x.y;
 
 
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derive;
                 
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -258,9 +258,9 @@ public class CodeGeneratorProcessorGenerateTest {
                 package x.y;
                 
                 import java.lang.Math;
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derive;
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -283,10 +283,10 @@ public class CodeGeneratorProcessorGenerateTest {
                 """
                 package x.y;
                 
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derive;
                 import java.util.Date;
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 
@@ -310,10 +310,10 @@ public class CodeGeneratorProcessorGenerateTest {
                 package x.y;
                 
                 import java.lang.Math;
-                import com.kt.codegen.Generate;
+                import com.kt.codegen.Derive;
                 import java.util.Date;
 
-                @Generate(name = "After", replace = {})
+                @Derive(name = "After", replace = {})
                 public  class Before<T, U> {}
                 """,
 

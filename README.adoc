@@ -1,11 +1,12 @@
 = Java Code Generator Annotations
 
-:INSTANTIATE:       pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
-:GENERATE:          pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Generate.java[`@Generate`]]
-:REPLACE:           pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/Replace.java[`@Replace`]]]
-:SRC_DIR:           ../../java-code-gen-doc-snippets/src/main/java/com/kt/codegen/demo
-:GEN_DIR:           ../../java-code-gen-doc-snippets/target/generated-sources/annotations/com/kt/codegen/demo
-:SOURCE_DIRECTORY:  pass:quotes[link:./java-code-gen/src/main/java/com/kt/codegen/SourceDirectory.java[`@SourceDirectory`]]
+:INSTANTIATE:       pass:quotes[link:../main/java/com/kt/codegen/Instantiate.java[`@Instantiate`]]
+:DERIVE:            pass:quotes[link:../main/java/com/kt/codegen/Derive.java[`@Derive`]]
+:REPLACE:           pass:quotes[link:../main/java/com/kt/codegen/Replace.java[`@Replace`]]]
+:SRC_DIR:           ../main/java/com/kt/codegen/demo
+:GEN_DIR:           ../../target/generated-sources/annotations/com/kt/codegen/demo
+:SOURCE_DIRECTORY:  pass:quotes[link:../main/java/com/kt/codegen/SourceDirectory.java[`@SourceDirectory`]]
+
 
 == TL;DR
 === What is this?
@@ -14,8 +15,8 @@ This library provides the following code-generating annotations:
 * {INSTANTIATE} generates concrete instantiations of
 generic classes analogous to C++ templates, e.g. `MyListString` from
 `MyList<T>`
-* {GENERATE} generates new classes by applying string or
-  regex replacements to the source code
+* {DERIVE} generates new classes derived from existing ones by applying
+  string or regex replacements to the source code
 
 === Why should I use it?
 The main advantage of this library over generic template engines such as
@@ -154,6 +155,9 @@ class MyListString {
 If simple string replacement won't do the trick you set `@Replace(..., regex = true)` for
 matching regular expressions.
 
+Also, you can specify multiple replacements with
+`replace = {@Replace(...), @Replace(...), ...}`.
+
 
 === Primitives
 How about adding a primitive version of our list? Simple: just add a `double` instantiation:
@@ -181,7 +185,7 @@ class MyList<T> {
 }
 ----
 
-This will additionally generate the following class:
+This will additionally geenrate the following class:
 [source,java]
 ----
 // generated from com.kt.codegen.demo.list4.MyList
@@ -235,14 +239,14 @@ source directory with {SOURCE_DIRECTORY}.
 (i.e., `StringMyList` rather than `MyListString` in the example above) then
 you can set `append` to `false`.
 
-* {GENERATE}
+* {DERIVE}
   ** You can also change the relative source directory using {SOURCE_DIRECTORY}.
 * {REPLACE}
   ** If normal string replacement won't cut it, you can set `regex` to
 `true`.
 
 
-== Generate classes with {GENERATE}
+== Generate derived classes with {DERIVE}
 Say you are working on a primitive collection library, and you have successfully written
 a `double` list implementation:
 [source,java]
@@ -277,11 +281,11 @@ that template engine.
 ----
 package com.kt.codegen.demo.double2;
 
-import com.kt.codegen.Generate;
+import com.kt.codegen.Derive;
 import com.kt.codegen.Replace;
 
-@Generate(name = "MyFloatList", replace = @Replace(from = "\\bdouble\\b", to = "float", regex = true))
-@Generate(name = "MyLongList", replace = @Replace(from = "\\bdouble\\b", to = "long", regex = true))
+@Derive(name = "MyFloatList", replace = @Replace(from = "\\bdouble\\b", to = "float", regex = true))
+@Derive(name = "MyLongList", replace = @Replace(from = "\\bdouble\\b", to = "long", regex = true))
 public class MyDoubleList {
     private double[] array;
 
@@ -293,7 +297,7 @@ public class MyDoubleList {
 }
 ----
 
-This will generate two classes:
+This will generate two derived classes:
 [source,java]
 ----
 // generated from com.kt.codegen.demo.double2.MyDoubleList
@@ -329,4 +333,4 @@ public class MyLongList {
 ----
 
 Note that you can also specify custom string replacements using
-`@Generate(..., replace = { @Replace(...), ... })`.
+`@Derive(..., replace = { @Replace(...), ... })`.
