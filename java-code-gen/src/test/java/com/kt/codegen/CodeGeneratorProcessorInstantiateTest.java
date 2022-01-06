@@ -30,11 +30,15 @@ public class CodeGeneratorProcessorInstantiateTest {
                   Instantiate(Date.class)
                 public class Klass<T
                                      extends
-                                      Number>   {  // comment after brace
+                                      Number>  
+                              implements
+                                Comparable<String>  {  // comment after brace
                     private List<T> list;
                     
                     public Klass(T arg) {
                     }
+                    
+                    public int compareTo(String s) { return 0; }
                 }
                 """,
 
@@ -47,11 +51,14 @@ public class CodeGeneratorProcessorInstantiateTest {
                 import java.util.Date;
                 import java.util.List;
                 
-                public class KlassDate {  // comment after brace
+                public class KlassDate implements
+                                Comparable<String>  {  // comment after brace
                     private List<Date> list;
                     
                     public KlassDate(Date arg) {
                     }
+                    
+                    public int compareTo(String s) { return 0; }
                 }
                 """);
     }

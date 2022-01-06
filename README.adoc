@@ -77,7 +77,7 @@ link:https://freemarker.apache.org/[FreeMaker] is:
 *Your template is actual code!*
 
 Thus, instead of having to write a placeholder-sprinkled, engine-specific
-template file, your "template" is a normal Java class with annotations.
+template file, your "template" is a normal Java class (with annotations).
 The benefits are as follows:
 
   ** The "template" is source code rather than a resource file
@@ -278,6 +278,9 @@ class MyMap<K, V> {                          // <-- two type parameters
 * If normal string replacement won't cut it, you can set `{REPLACE}.regex` to `true`.
 * You can specify multiple replacements with
 `replace = {@Replace(...), @Replace(...), ...}`.
+* I you prefer prepending the concrete type(s) to the class rather than the default
+appending style (i.e., `StringMyList` rather than `MyListString`) then set
+`{DERIVE}.append` to `false`.
 
 
 == Generate derived classes with {DERIVE}
@@ -301,7 +304,7 @@ public class MyDoubleList {
 Now you have a couple of options to create lists for other primitive types:
 
 . You copy and paste the class a couple of times followed by a search/replace frenzy. This
-is cumbersome, time-consuming and will eventually lead to implementations drifting
+is cumbersome, time-consuming, and will eventually lead to implementations drifting
 apart because you'll forget to apply that one fix to the `float` implementation.
 
 . You fire up a generic template engine, convert this nice, working, unit-tested,
@@ -369,7 +372,4 @@ public class MyLongList {
 === Notes
 
 * The relative source directory can also be changed using {SOURCE_DIRECTORY}.
-* I you prefer prepending the concrete type(s) to the class rather than the default
-  appending style (i.e., `StringMyList` rather than `MyListString`) then set
-  `{INSTANTIATE}.append` to `false`.
-* Custom string replacements can be specified in `{INSTANTIATE}.replace`.
+* Custom string replacements can be specified in `{DERIVE}.replace`.

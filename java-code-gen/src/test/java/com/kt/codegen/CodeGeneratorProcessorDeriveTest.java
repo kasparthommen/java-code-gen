@@ -20,14 +20,16 @@ public class CodeGeneratorProcessorDeriveTest {
                 import com.kt.codegen.Derivatives;
                 import com.kt.codegen.Derive;
                 import com.kt.codegen.Replace;
-
+                
                 @Derive(name = "After", replace = {})
-                public  class Before<T, U> {  // Beforex 1Before Before
+                public  class Before<T, U>    implements     Comparable<Before> {  // Beforex 1Before Before
                   int q;
                   
                   public Before(int q) {
                     this.q = q;
                   }
+                  
+                  public int compareTo(Before other) { return 0; }
                 }
                 """,
 
@@ -37,12 +39,14 @@ public class CodeGeneratorProcessorDeriveTest {
                 // generated from x.y.Before
                 package x.y;
                 
-                public  class After<T, U> {  // Beforex 1Before After
+                public  class After<T, U>    implements     Comparable<After> {  // Beforex 1Before After
                   int q;
                   
                   public After(int q) {
                     this.q = q;
                   }
+                  
+                  public int compareTo(After other) { return 0; }
                 }
                 """);
 }

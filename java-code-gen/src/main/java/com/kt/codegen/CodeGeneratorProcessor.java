@@ -87,10 +87,10 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void processDerive(TypeElement sourceClass, Derive derive, Messager messager) {
         process(
                 sourceClass,
-                getSourceDirectory(sourceClass),
                 new Class[] { Derive.class, Derivatives.class, SourceDirectory.class },
                 derive,
                 messager);
@@ -133,8 +133,17 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                 ? sourceClassName + typeNames
                 : typeNames + sourceClassName;
 
+//        // replace class declaration - hard to do with regex, so we do it manually
+//        String classDeclarationStart = "class\\s+" + sourceClassName;
+//        int classDeclarationIndex = indexOfRegex(code, classDeclarationStart);
+
+
         List<Replace> customAndTypeReplaces = new ArrayList<>(Arrays.asList(instantiation.replace()));
-        customAndTypeReplaces.add(new ReplaceImpl(sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s*\\{", targetClassName + " {", true));
+        String extendsRegex = "\\bextends\\s+[\\w\\s<>]+\\s*";
+        String implementsRegex = "\\bimplements\\s+[\\w\\s<>]+\\s*";
+        String extendsOrImplements = "(" + extendsRegex + "|" + implementsRegex + ")";
+        extendsOrImplements = "";
+        customAndTypeReplaces.add(new ReplaceImpl(sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s* " + extendsOrImplements, targetClassName + " ", true));
         for (int i = 0; i < typeParameterNames.length; i++) {
             String from = "\\b" + typeParameterNames[i] + "\\b";
             String to = concreteTypeNames[i];
@@ -145,7 +154,6 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
         process(
                 sourceClass,
-                getSourceDirectory(sourceClass),
                 new Class[] { Instantiate.class, Instantiations.class, SourceDirectory.class },
                 derive,
                 messager);
@@ -159,11 +167,11 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
     private void process(
             TypeElement sourceClass,
-            String relativeSourceDir,
             Class<? extends Annotation>[] annotationTypes,
             Derive derive,
             Messager messager) {
         // read source file
+        String relativeSourceDir = getSourceDirectory(sourceClass);
         Path sourceDir = findSourceDirectory(relativeSourceDir, messager);
         String sourceCode = readSourceCode(sourceDir, sourceClass, messager);
         String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
