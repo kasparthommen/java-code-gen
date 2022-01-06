@@ -280,7 +280,7 @@ class MyMap<K, V> {                          // <-- two type parameters
 `replace = {@Replace(...), @Replace(...), ...}`.
 * I you prefer prepending the concrete type(s) to the class rather than the default
 appending style (i.e., `StringMyList` rather than `MyListString`) then set
-`{DERIVE}.append` to `false`.
+`{INSTANTIATE}.append` to `false`.
 
 
 == Generate derived classes with {DERIVE}
