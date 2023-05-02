@@ -13,6 +13,7 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.MirroredTypesException;
@@ -93,12 +94,10 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         // class declaration
         String sourceClassDeclarationRegex;
         String targetClassDeclaration;
-        if (sourceClass.getKind() != ElementKind.CLASS) {
-            throw new CodeGeneratorException("Only classes can be annotated with @Derive: " + sourceClass.getQualifiedName());
-        }
 
         String sourceClassName = sourceClass.getSimpleName().toString();
         String targetClassName = derive.name();
+        String targetClassDeclarationPlaceholder = String.valueOf(System.nanoTime()) + "(";
         sourceClassDeclarationRegex = "\\b" + sourceClassName + "\\b";
         targetClassDeclaration = targetClassName;
 
@@ -106,7 +105,10 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                 sourceClass,
                 new Class[] { Derive.class, Derivatives.class, SourceDirectory.class },
                 derive,
-                sourceClassDeclarationRegex, targetClassDeclaration, messager);
+                sourceClassDeclarationRegex,
+                targetClassDeclarationPlaceholder,
+                targetClassDeclaration,
+                messager);
     }
 
     private void processInstantiate(TypeElement sourceClass, Messager messager) {
@@ -137,7 +139,8 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             throw new CodeGeneratorException("Expected " + typeParameters.length + " type parameters, got " + Arrays.toString(concreteTypes));
         }
 
-        messager.printMessage(NOTE, "Instantiating " + sourceClass.getQualifiedName() + " for " + Arrays.toString(concreteTypeNames));
+        Name qualifiedName = sourceClass.getQualifiedName();
+        messager.printMessage(NOTE, "Instantiating " + qualifiedName + " for " + Arrays.toString(concreteTypeNames));
         String typeNames = Arrays.stream(concreteTypeNames)
                                  .map(FIRST_UPPER)
                                  .collect(joining(""));
@@ -148,15 +151,18 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
         // class/record declaration
         String sourceClassDeclarationRegex;
+        String targetClassDeclarationPlaceholder;
         String targetClassDeclaration;
         boolean isRecord = sourceClass.getKind() == ElementKind.RECORD;
         if (isRecord) {
             // record declaration
             sourceClassDeclarationRegex = sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s*\\(";
+            targetClassDeclarationPlaceholder = String.valueOf(System.nanoTime()) + "(";
             targetClassDeclaration = targetClassName + "(";
         } else {
             // class declaration
             sourceClassDeclarationRegex = sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s* ";
+            targetClassDeclarationPlaceholder = String.valueOf(System.nanoTime()) + "(";
             targetClassDeclaration = targetClassName + " ";
         }
 
@@ -181,6 +187,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                 new Class[] { Instantiate.class, Instantiations.class, SourceDirectory.class },
                 derive,
                 sourceClassDeclarationRegex,
+                targetClassDeclarationPlaceholder,
                 targetClassDeclaration,
                 messager);
         }
@@ -196,6 +203,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             Class<? extends Annotation>[] annotationTypesToRemove,
             Derive derive,
             String sourceClassDeclarationRegex,
+            String targetClassDeclarationPlaceholder,
             String targetClassDeclaration,
             Messager messager) {
         // read source file
@@ -217,6 +225,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                 sourceClassNameFQ,
                 targetClassNameFQ,
                 sourceClassDeclarationRegex,
+                targetClassDeclarationPlaceholder,
                 targetClassDeclaration,
                 annotationTypesToRemove,
                 sourceCode,
@@ -229,6 +238,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             String sourceClassNameFQ,
             String targetClassNameFQ,
             String sourceClassDeclarationRegex,
+            String targetClassDeclarationPlaceholder,
             String targetClassDeclaration,
             Class<? extends Annotation>[] annotationTypesToRemove,
             String sourceCode,
@@ -242,11 +252,10 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         // a dummy placeholder, and then replace the placeholder by the
         // actual type declaration at the end; this is to prevent user
         // replacements from accidentally modifying the new type declaration
-        String targetClassNamePlaceholder = String.valueOf(System.nanoTime());
         targetCode = replace(
                 targetCode,
                 sourceClassDeclarationRegex,
-                targetClassNamePlaceholder,
+                targetClassDeclarationPlaceholder,
                 ReplacementMethod.REGEX_ALL,
                 true,
                 sourceClassNameFQ);
@@ -257,7 +266,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         // finally, replace the placeholder with the actual new type declaration
         targetCode = replace(
                 targetCode,
-                targetClassNamePlaceholder,
+                targetClassDeclarationPlaceholder,
                 targetClassDeclaration,
                 ReplacementMethod.PLAIN_ALL,
                 true,

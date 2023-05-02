@@ -256,4 +256,35 @@ public class CodeGeneratorProcessorInstantiateTest {
                 }
                 """);
     }
+
+    @Test
+    public void bug() throws Exception {
+        checkGeneration(
+                new CodeGeneratorProcessor(),
+
+                "x.y.Pair",
+
+                """
+                package x.y;
+                                        
+                                        
+                import com.kt.codegen.Instantiate;
+                                        
+                                        
+                @Instantiate(value = { int.class, int.class }, append = false)
+                public record Pair<E1, E2>(E1 v1, E2 v2) {
+                }
+                """,
+
+                "x.y.IntIntPair",
+
+                """
+                // generated from x.y.Pair
+                package x.y;
+                                        
+                public record IntIntPair(int v1, int v2) {
+                }
+                """
+        );
+    }
 }
