@@ -65,7 +65,6 @@ public class CodeGeneratorProcessorInstantiateTest {
 
     @Test
     public void interfaceOneTypeArg() throws Exception {
-
         checkGeneration(
                 new CodeGeneratorProcessor(),
 
@@ -212,6 +211,48 @@ public class CodeGeneratorProcessorInstantiateTest {
                         String[] array = new String[42];
                         Float t = Float.NaN;
                     }
+                }
+                """);
+    }
+
+    @Test
+    public void record() throws Exception {
+        checkGeneration(
+                new CodeGeneratorProcessor(),
+
+                "x.y.Batch",
+
+                """
+                package x.y;
+
+                import com.kt.codegen.Instantiate;
+                import java.util.List;
+                import com.kt.codegen.Replace;
+
+                @Instantiate(value = long.class, append = false, replace = {
+                        @Replace(from = "List<T>", to = "long[]")
+                })
+                public record Batch<T>(
+                        long time,
+                        boolean isSnapshot,
+                        List<T> entries) implements Runnable {
+                    public void run() {}
+                }
+                """,
+
+                "x.y.LongBatch",
+
+                """
+                // generated from x.y.Batch
+                package x.y;
+
+                import java.util.List;
+                            
+                public record LongBatch(
+                        long time,
+                        boolean isSnapshot,
+                        long[] entries) implements Runnable {
+                    public void run() {}
                 }
                 """);
     }

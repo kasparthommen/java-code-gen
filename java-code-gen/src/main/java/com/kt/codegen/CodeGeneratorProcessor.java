@@ -12,6 +12,7 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.MirroredTypesException;
@@ -89,11 +90,24 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
     @SuppressWarnings("unchecked")
     private void processDerive(TypeElement sourceClass, Derive derive, Messager messager) {
+        // class declaration
+        String sourceClassDeclarationRegex;
+        String targetClassDeclaration;
+        if (sourceClass.getKind() != ElementKind.CLASS) {
+            throw new CodeGeneratorException("Only classes can be annotated with @Derive");
+
+        }
+
+        String sourceClassName = sourceClass.getSimpleName().toString();
+        String targetClassName = derive.name();
+        sourceClassDeclarationRegex = "\\b" + sourceClassName + "\\b";
+        targetClassDeclaration = targetClassName;
+
         process(
                 sourceClass,
                 new Class[] { Derive.class, Derivatives.class, SourceDirectory.class },
                 derive,
-                messager);
+                sourceClassDeclarationRegex, targetClassDeclaration, messager);
     }
 
     private void processInstantiate(TypeElement sourceClass, Messager messager) {
@@ -133,29 +147,42 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                 ? sourceClassName + typeNames
                 : typeNames + sourceClassName;
 
-//        // replace class declaration - hard to do with regex, so we do it manually
-//        String classDeclarationStart = "class\\s+" + sourceClassName;
-//        int classDeclarationIndex = indexOfRegex(code, classDeclarationStart);
+        // class/record declaration
+        String sourceClassDeclarationRegex;
+        String targetClassDeclaration;
+        boolean isRecord = sourceClass.getKind() == ElementKind.RECORD;
+        if (isRecord) {
+            // record declaration
+            sourceClassDeclarationRegex = sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s*\\(";
+            targetClassDeclaration = targetClassName + "(";
+        } else {
+            // class declaration
+            sourceClassDeclarationRegex = sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s* ";
+            targetClassDeclaration = targetClassName + " ";
+        }
 
+        // custom replacements (before type parameter replacements because users may want
+        // to replace e.g. "T[]" by "double[]", so replacing "T" beforehand will break that
+        List<Replace> replacements = new ArrayList<>(Arrays.asList(instantiation.replace()));
 
-        List<Replace> customAndTypeReplaces = new ArrayList<>(Arrays.asList(instantiation.replace()));
-        String extendsRegex = "\\bextends\\s+[\\w\\s<>]+\\s*";
-        String implementsRegex = "\\bimplements\\s+[\\w\\s<>]+\\s*";
-        String extendsOrImplements = "(" + extendsRegex + "|" + implementsRegex + ")";
-        extendsOrImplements = "";
-        customAndTypeReplaces.add(new ReplaceImpl(sourceClassName + "\\s*<[\\s\\w\\?,]+>\\s* " + extendsOrImplements, targetClassName + " ", true));
+        // type parameter replacements
         for (int i = 0; i < typeParameterNames.length; i++) {
             String from = "\\b" + typeParameterNames[i] + "\\b";
             String to = concreteTypeNames[i];
-            customAndTypeReplaces.add(new ReplaceImpl(from, to, true));
+            // don't enforce presence as there may be no type parameters left after the class/record
+            // declaration and user-defined replacements
+            replacements.add(new ReplaceImpl(from, to, true, false));
         }
 
-        DeriveImpl derive = new DeriveImpl(targetClassName, customAndTypeReplaces.toArray(Replace[]::new));
+        // convert this instantiation to a derived class task
+        DeriveImpl derive = new DeriveImpl(targetClassName, replacements.toArray(Replace[]::new));
 
         process(
                 sourceClass,
                 new Class[] { Instantiate.class, Instantiations.class, SourceDirectory.class },
                 derive,
+                sourceClassDeclarationRegex,
+                targetClassDeclaration,
                 messager);
         }
 
@@ -167,57 +194,87 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
     private void process(
             TypeElement sourceClass,
-            Class<? extends Annotation>[] annotationTypes,
+            Class<? extends Annotation>[] annotationTypesToRemove,
             Derive derive,
+            String sourceClassDeclarationRegex,
+            String targetClassDeclaration,
             Messager messager) {
         // read source file
         String relativeSourceDir = getSourceDirectory(sourceClass);
         Path sourceDir = findSourceDirectory(relativeSourceDir, messager);
         String sourceCode = readSourceCode(sourceDir, sourceClass, messager);
-        String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
+        String sourceClassNameFQ = sourceClass.getQualifiedName().toString();
 
         // generate target files
-        String pkg = FQ_TO_PACKAGE.apply(fullyQualifiedSourceClassName);
-        String fullyQualifiedTargetClassName = pkg + "." + derive.name();
-        if (fullyQualifiedTargetClassName.equals(fullyQualifiedSourceClassName)) {
+        String pkg = FQ_TO_PACKAGE.apply(sourceClassNameFQ);
+        String targetClassNameFQ = pkg + "." + derive.name();
+        if (targetClassNameFQ.equals(sourceClassNameFQ)) {
             throw new CodeGeneratorException(
-                    "Target class name must be different from source class name, but was " + fullyQualifiedTargetClassName);
+                    "Target class name must be different from source class name, but was " + targetClassNameFQ);
         }
-        messager.printMessage(NOTE, "Creating " + fullyQualifiedTargetClassName + " from " + fullyQualifiedSourceClassName);
-        String targetCode = generateTarget(
-                fullyQualifiedSourceClassName,
-                fullyQualifiedTargetClassName,
-                annotationTypes,
+
+        messager.printMessage(NOTE, "Creating " + targetClassNameFQ + " from " + sourceClassNameFQ);
+        String targetCode = generateTargetCode(
+                sourceClassNameFQ,
+                targetClassNameFQ,
+                sourceClassDeclarationRegex,
+                targetClassDeclaration,
+                annotationTypesToRemove,
                 sourceCode,
                 derive.replace());
 
-        writeFile(targetCode, fullyQualifiedTargetClassName, processingEnv);
+        writeFile(targetCode, targetClassNameFQ, processingEnv);
     }
 
-    private static String generateTarget(
-            String fullyQualifiedSourceClassName,
-            String fullyQualifiedTargetClassName,
-            Class<? extends Annotation>[] annotationTypes,
+    private static String generateTargetCode(
+            String sourceClassNameFQ,
+            String targetClassNameFQ,
+            String sourceClassDeclarationRegex,
+            String targetClassDeclaration,
+            Class<? extends Annotation>[] annotationTypesToRemove,
             String sourceCode,
             Replace[] replacements) {
-        String sourceClassName = FQ_TO_CLASS.apply(fullyQualifiedSourceClassName);
-        String targetClassName = FQ_TO_CLASS.apply(fullyQualifiedTargetClassName);
+        String sourceClassName = FQ_TO_CLASS.apply(sourceClassNameFQ);
+        String targetClassName = FQ_TO_CLASS.apply(targetClassNameFQ);
 
         String targetCode = sourceCode;
 
-        targetCode = replace(replacements, targetCode, fullyQualifiedSourceClassName);
+        // type declaration replacement is two-stage: first, replace by
+        // a dummy placeholder, and then replace the placeholder by the
+        // actual type declaration at the end; this is to prevent user
+        // replacements from accidentally modifying the new type declaration
+        String targetClassNamePlaceholder = String.valueOf(System.nanoTime());
+        targetCode = replace(
+                targetCode,
+                sourceClassDeclarationRegex,
+                targetClassNamePlaceholder,
+                ReplacementMethod.REGEX_ALL,
+                true,
+                sourceClassNameFQ);
 
-        targetCode = removeImport(targetCode, Derivatives.class.getName(), fullyQualifiedSourceClassName);
-        targetCode = removeImport(targetCode, Derive.class.getName(), fullyQualifiedSourceClassName);
-        targetCode = removeImport(targetCode, Instantiations.class.getName(), fullyQualifiedSourceClassName);
-        targetCode = removeImport(targetCode, Instantiate.class.getName(), fullyQualifiedSourceClassName);
-        targetCode = removeImport(targetCode, Replace.class.getName(), fullyQualifiedSourceClassName);
-        targetCode = removeImport(targetCode, SourceDirectory.class.getName(), fullyQualifiedSourceClassName);
+        // now, process user replacements
+        targetCode = replace(replacements, targetCode, sourceClassNameFQ);
 
-        targetCode = removeAnnotations(targetCode, annotationTypes, fullyQualifiedSourceClassName);
+        // finally, replace the placeholder with the actual new type declaration
+        targetCode = replace(
+                targetCode,
+                targetClassNamePlaceholder,
+                targetClassDeclaration,
+                ReplacementMethod.PLAIN_ALL,
+                true,
+                sourceClassNameFQ);
+
+        targetCode = removeImport(targetCode, Derivatives.class.getName(), sourceClassNameFQ);
+        targetCode = removeImport(targetCode, Derive.class.getName(), sourceClassNameFQ);
+        targetCode = removeImport(targetCode, Instantiations.class.getName(), sourceClassNameFQ);
+        targetCode = removeImport(targetCode, Instantiate.class.getName(), sourceClassNameFQ);
+        targetCode = removeImport(targetCode, Replace.class.getName(), sourceClassNameFQ);
+        targetCode = removeImport(targetCode, SourceDirectory.class.getName(), sourceClassNameFQ);
+
+        targetCode = removeAnnotations(targetCode, annotationTypesToRemove, sourceClassNameFQ);
 
         targetCode = targetCode.replaceAll("\\b" + sourceClassName + "\\b", targetClassName);
-        targetCode = "// generated from " + fullyQualifiedSourceClassName + "\n" + targetCode;
+        targetCode = "// generated from " + sourceClassNameFQ + "\n" + targetCode;
 
         return targetCode;
     }
@@ -251,8 +308,8 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
     }
 
     private static String readSourceCode(Path sourceDir, TypeElement sourceClass, Messager messager) {
-        String fullyQualifiedSourceClassName = sourceClass.getQualifiedName().toString();
-        String relativePath = fullyQualifiedSourceClassName.replace(".", File.separator) + ".java";
+        String sourceClassNameFQ = sourceClass.getQualifiedName().toString();
+        String relativePath = sourceClassNameFQ.replace(".", File.separator) + ".java";
         Path sourceFile = sourceDir.resolve(relativePath);
         if (!Files.exists(sourceFile)) {
             throw new CodeGeneratorException("Source file not found: " + sourceFile);
@@ -268,19 +325,22 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         }
     }
 
-    private static String removeImport(String code, String fullyQualifiedClassName, String fullyQualifiedSourceClassName) {
+    private static String removeImport(
+            String code,
+            String classNameFQ,
+            String sourceClassNameFQ) {
         return replace(
                 code,
-                "^\\s*import\\s+" + fullyQualifiedClassName + "\\s*;\\s*\n", "\n",
+                "^\\s*import\\s+" + classNameFQ + "\\s*;\\s*\n", "\n",
                 ReplacementMethod.REGEX_ALL,
                 false,
-                fullyQualifiedSourceClassName);
+                sourceClassNameFQ);
     }
 
     private static String removeAnnotations(
             String code,
             Class<? extends Annotation>[] annotationTypes,
-            String fullyQualifiedSourceClassName) {
+            String sourceClassNameFQ) {
         for (var annotationType : annotationTypes) {
             String annotationStartRegex = "@\\s*" + annotationType.getSimpleName() + "\\s*\\(";
             while (true) {
@@ -294,7 +354,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                         "(",
                         ReplacementMethod.REGEX_FIRST,
                         true,
-                        fullyQualifiedSourceClassName);
+                        sourceClassNameFQ);
                 code = skipBrackets('(', ')', code, annotationStartIndex);
                 code = code.substring(0, annotationStartIndex).replaceAll("\\s\\s+$", "\n\n") + code.substring(annotationStartIndex).replaceAll("^\\s*", "");
             }
@@ -302,12 +362,16 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         return code;
     }
 
-    private static String replace(Replace[] replacements, String code, String fullyQualifiedSourceClassName) {
+    private static String replace(Replace[] replacements, String code, String sourceClassNameFQ) {
         for (Replace replacement : replacements) {
             String from = replacement.from();
             String to = replacement.to();
             ReplacementMethod replacementMethod = replacement.regex() ? ReplacementMethod.REGEX_ALL : ReplacementMethod.PLAIN_ALL;
-            code = replace(code, from, to, replacementMethod, true, fullyQualifiedSourceClassName);
+
+            // enforce presence of the replacement key if it's user-generated and if it's
+            // the class/record declaration
+            boolean enforcePresence = !(replacement instanceof ReplaceImpl) || ((ReplaceImpl)replacement).enforcePresence;
+            code = replace(code, from, to, replacementMethod, enforcePresence, sourceClassNameFQ);
         }
         return code;
     }
@@ -318,12 +382,12 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
             String to,
             ReplacementMethod replacementMethod,
             boolean enforcePresence,
-            String fullyQualifiedSourceClassName) {
+            String sourceClassNameFQ) {
         if (replacementMethod == ReplacementMethod.PLAIN_ALL) {
             if (code.contains(from)) {
                 return code.replace(from, to);
             } else if (enforcePresence) {
-                throw new CodeGeneratorException("Search term not found in " + fullyQualifiedSourceClassName + ": " + from);
+                throw new CodeGeneratorException("Search term not found in " + sourceClassNameFQ + ": " + from);
             }
         } else {
             Pattern pattern = Pattern.compile(from, Pattern.MULTILINE | Pattern.DOTALL);
@@ -333,7 +397,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
                         ? matcher.replaceAll(to)
                         : matcher.replaceFirst(to);
             } else if (enforcePresence) {
-                throw new CodeGeneratorException("Regex search term not found in " + fullyQualifiedSourceClassName + ": " + from);
+                throw new CodeGeneratorException("Regex search term not found in " + sourceClassNameFQ + ": " + from);
             }
         }
         return code;
@@ -341,15 +405,15 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
 
     private static void writeFile(
             String source,
-            String fullyQualifiedTargetClassName,
+            String targetClassNameFQ,
             ProcessingEnvironment processingEnv) {
         try {
-            JavaFileObject targetFile = processingEnv.getFiler().createSourceFile(fullyQualifiedTargetClassName);
+            JavaFileObject targetFile = processingEnv.getFiler().createSourceFile(targetClassNameFQ);
             try (PrintWriter targetWriter = new PrintWriter(targetFile.openWriter())) {
                 targetWriter.write(source);
             }
         } catch (IOException ex) {
-            throw new CodeGeneratorException("Could not generate file " + fullyQualifiedTargetClassName + ": " + ex.getMessage());
+            throw new CodeGeneratorException("Could not generate file " + targetClassNameFQ + ": " + ex.getMessage());
         }
     }
 
@@ -448,11 +512,13 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         private final String from;
         private final String to;
         private final boolean regex;
+        private final boolean enforcePresence;
 
-        private ReplaceImpl(String from, String to, boolean regex) {
+        private ReplaceImpl(String from, String to, boolean regex, boolean enforcePresence) {
             this.from = from;
             this.to = to;
             this.regex = regex;
+            this.enforcePresence = enforcePresence;
         }
 
         @Override

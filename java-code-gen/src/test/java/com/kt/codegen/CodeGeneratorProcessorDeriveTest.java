@@ -334,4 +334,58 @@ public class CodeGeneratorProcessorDeriveTest {
                 public  class After<T, U> {}
                 """);
     }
+
+    @Test
+    public void testBug() throws Exception {
+        checkGeneration(
+                new CodeGeneratorProcessor(),
+
+                "x.y.DoubleDictSequence8",
+
+                """
+                package x.y;
+                
+                import com.kt.codegen.Derive;
+                import com.kt.codegen.Replace;
+
+                @Derive(name = "IntDictSequence16", replace = {
+                    @Replace(from = "byte", to = "short"),
+                    @Replace(from = "Byte", to = "Short"),
+                    @Replace(from = "double", to = "int"),
+                    @Replace(from = "Double", to = "Int"),
+                    @Replace(from = "1 << 8", to = "1 << 16"),
+                })
+                class DoubleDictSequence8 {
+                    private final double[] universe;
+                    private final byte[] indices;
+                
+                    DoubleDictSequence8(double[] universe, byte[] indices) {
+                        assert universe.length <= 1 << 8;
+                
+                        this.universe = universe;
+                        this.indices = indices;
+                    }
+                }
+                """,
+
+                "x.y.IntDictSequence16",
+
+                """
+                // generated from x.y.DoubleDictSequence8
+                package x.y;
+                
+                class IntDictSequence16 {
+                    private final int[] universe;
+                    private final short[] indices;
+                
+                    IntDictSequence16(int[] universe, short[] indices) {
+                        assert universe.length <= 1 << 16;
+                
+                        this.universe = universe;
+                        this.indices = indices;
+                    }
+                }
+                """
+        );
+    }
 }

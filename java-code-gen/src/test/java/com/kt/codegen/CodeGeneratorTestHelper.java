@@ -23,6 +23,8 @@ class CodeGeneratorTestHelper {
             String source,
             String expectedTargetClassName,
             String expectedTarget) throws Exception {
+        System.setProperty("com.google.common.truth.disable_stack_trace_cleaning", "true");
+
         saveSourceFileAndScheduleCleanup(sourceClassName, source);
         Compilation compilation = javac()
                 .withProcessors(annotationProcessor)
