@@ -94,8 +94,7 @@ public class CodeGeneratorProcessor extends AbstractProcessor {
         String sourceClassDeclarationRegex;
         String targetClassDeclaration;
         if (sourceClass.getKind() != ElementKind.CLASS) {
-            throw new CodeGeneratorException("Only classes can be annotated with @Derive");
-
+            throw new CodeGeneratorException("Only classes can be annotated with @Derive: " + sourceClass.getQualifiedName());
         }
 
         String sourceClassName = sourceClass.getSimpleName().toString();
